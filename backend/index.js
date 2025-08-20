@@ -1474,6 +1474,16 @@ app.delete('/api/auth/delete-all-data', async (req, res) => {
   }
 });
 
+// Root health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: 'NewGamma Backend API',
+    version: '1.0.0'
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
