@@ -21,6 +21,9 @@ export type SlideCard = {
   }>;
   layout?: 'image-left' | 'image-right' | 'image-bottom' | 'image-top' | 'full-image' | 'text-only' | 'title-only' | 'split' | '2-columns' | '3-columns' | '4-columns' | 'paragraph';
   background?: string; // e.g., 'light', 'dark', or custom color
+  custom_styling?: any; // Add missing property
+  content?: any; // Add missing property
+  theme_info?: any; // Add missing property
 };
 
 // Theme template structure
@@ -70,6 +73,7 @@ export type Presentation = {
   title: string;
   slides: SlideCard[];
   theme: ThemeTemplate;
+  theme_id?: string; // Add missing property
   createdAt: Date;
   updatedAt: Date;
 };
@@ -77,6 +81,30 @@ export type Presentation = {
 // API response structure for OpenAI
 export type SlideGenerationResponse = {
   slides: SlideCard[];
+};
+
+// Add missing types for generate functions
+export type GenerateRequest = {
+  topic: string;
+  theme?: string;
+  slides?: number;
+};
+
+export type GenerateResponse = {
+  slides: SlideCard[];
+  success: boolean;
+  message?: string;
+};
+
+export type GenerateImageRequest = {
+  prompt: string;
+  style?: string;
+};
+
+export type GenerateImageResponse = {
+  url: string;
+  success: boolean;
+  message?: string;
 };
 
 // Component props types
@@ -114,10 +142,46 @@ export type OutlineItem = {
   title: string;
   bullets: string[];
   layout?: 'image-left' | 'image-right' | 'image-bottom' | 'image-top' | 'full-image' | 'text-only' | 'title-only' | 'split' | '2-columns' | '3-columns' | '4-columns' | 'paragraph';
+  bulletsHtml?: string[]; // Add missing property
+  titleHtml?: string; // Add missing property
+  elements?: any[]; // Add missing property
 };
 
 export type ThemeSelectorProps = {
   selectedTheme: ThemeTemplate;
   onThemeChange: (theme: ThemeTemplate) => void;
   themes: ThemeTemplate[];
+};
+
+// Add missing types for ProfileModal
+export type ProfileModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  user: User | null;
+  token: string;
+  onProfileUpdate: (updatedUser: any) => void;
+  onPresentationSelect?: (presentation: any) => void; // Make optional
+  onLogout: () => void;
+  onDeleteAccount: () => void;
+};
+
+// Add User type
+export type User = {
+  id: string;
+  email: string;
+  display_name?: string;
+  name?: string;
+  // Add other user properties as needed
+};
+
+// Add TextBlock type for RichTextEditor
+export type TextBlock = {
+  id: string;
+  type: 'paragraph' | 'heading' | 'list' | 'quote';
+  content: string;
+  level?: number;
+  listType?: 'bullet' | 'numbered';
+  alignment?: 'left' | 'center' | 'right';
+  color?: string;
+  fontSize?: string;
 }; 

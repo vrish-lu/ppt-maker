@@ -1,24 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import PresentationView from './components/organisms/PresentationView';
 import './App.css';
-import SlideCard from './components/atoms/Card';
 import Stepper from './components/atoms/Stepper';
-import SlideList from './components/organisms/SlideList';
-import DownloadButton from './components/molecules/DownloadButton';
-import EditablePptxButton from './components/molecules/EditablePptxButton';
-import ScreenshotButton from './components/molecules/ScreenshotButton';
 import ModernNavbar from './components/molecules/ModernNavbar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthModal from './components/molecules/AuthModal';
 import ProfileModal from './components/molecules/ProfileModal';
 import RecentPresentations from './components/molecules/RecentPresentations';
 
-
-import { ThemeTemplate, SlideCard as SlideCardType, OutlineItem } from './types';
+import { ThemeTemplate, SlideCard as SlideCardType, OutlineItem, User } from './types';
 import { getDefaultTheme } from './data/themes';
 import TypingAnimation from './components/atoms/TypingAnimation';
 import { ScreenshotService } from './services/screenshot';
 import { DownloadService } from './services/download';
+import { generateSlides, regenerateSlide } from './services/api';
 import pptxgen from 'pptxgenjs';
 import html2canvas from 'html2canvas';
 import { defaultThemes } from './data/themes';
@@ -1571,6 +1566,48 @@ const AppContent = () => {
       generateImagesForSlides();
     }
   }, [currentStep, imageSource, slidesReordered]); // Removed outline from dependencies
+
+  // Generate images for all slides
+  const generateImagesForSlides = async () => {
+    if (imageSource === 'None' || outline.length === 0) return;
+    
+    setIsGeneratingImages(true);
+    try {
+      const imagePromises = outline.map(async (section, idx) => {
+        const prompt = `${section.title} ${imageStyle || ''}`.trim();
+        const response = await fetch('http://localhost:3002/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            prompt, 
+            style: imageStyle,
+            slideIndex: idx 
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return { idx: idx.toString(), url: data.imageUrl };
+        }
+        return null;
+      });
+
+      const results = await Promise.all(imagePromises);
+      const newImages: {[key: string]: string} = {};
+      results.forEach(result => {
+        if (result) {
+          newImages[result.idx] = result.url.startsWith('/uploads/')
+            ? BACKEND_URL + result.url
+            : result.url;
+        }
+      });
+      setGeneratedImages(newImages);
+    } catch (error) {
+      console.error('Failed to generate images:', error);
+    } finally {
+      setIsGeneratingImages(false);
+    }
+  };
 
   // Generate new slides based on topic
   const handleGenerateSlides = async (topic: string) => {
