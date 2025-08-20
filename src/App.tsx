@@ -1575,7 +1575,7 @@ const AppContent = () => {
     try {
       const imagePromises = outline.map(async (section, idx) => {
         const prompt = `${section.title} ${imageStyle || ''}`.trim();
-        const response = await fetch('http://localhost:3002/api/generate-image', {
+        const response = await fetch('https://ppt-maker-ezzr.onrender.com/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -1733,7 +1733,7 @@ const AppContent = () => {
   const handleFinalGenerate = async () => {
     setGenerationStatus('loading');
     try {
-      const response = await fetch('http://localhost:3002/api/generate', {
+      const response = await fetch('https://ppt-maker-ezzr.onrender.com/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1926,7 +1926,7 @@ const AppContent = () => {
         
         try {
           // Upload to Supabase via backend
-          const response = await fetch('http://localhost:3002/api/upload-image', {
+                      const response = await fetch('https://ppt-maker-ezzr.onrender.com/api/upload-image', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -2013,7 +2013,7 @@ const AppContent = () => {
       };
       console.log('Request body:', requestBody);
       
-      const response = await fetch('http://localhost:3002/api/regenerate-image', {
+              const response = await fetch('https://ppt-maker-ezzr.onrender.com/api/regenerate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)

@@ -636,7 +636,7 @@ export class DownloadService {
       // Fallback: Use server endpoint to get data URL
       if (imgElement.src.includes('/api/images/')) {
         const filename = imgElement.src.split('/api/images/')[1];
-        const dataUrlResponse = await fetch(`http://localhost:3002/api/images/${filename}/dataurl`);
+                  const dataUrlResponse = await fetch(`https://ppt-maker-ezzr.onrender.com/api/images/${filename}/dataurl`);
         
         if (dataUrlResponse.ok) {
           const data = await dataUrlResponse.json();
