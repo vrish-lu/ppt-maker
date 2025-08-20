@@ -287,7 +287,7 @@ const EditablePptxButton: React.FC<EditablePptxButtonProps> = ({
         if (showImage && slide.image && slide.image.url) {
           try {
             let imagePath = slide.image.url;
-            if (slide.image.url.includes('localhost:3002') || slide.image.url.startsWith('http')) {
+            if (slide.image.url.includes('ppt-maker-ezzr.onrender.com') || slide.image.url.startsWith('http')) {
               try {
                 const response = await fetch(slide.image.url, {
                   mode: 'cors',

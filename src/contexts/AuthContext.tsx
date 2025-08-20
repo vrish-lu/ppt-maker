@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ppt-maker-ezzr.onrender.com/api';
 
   // Check if user is already authenticated on app load
   useEffect(() => {

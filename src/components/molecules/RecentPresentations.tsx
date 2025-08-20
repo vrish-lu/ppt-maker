@@ -26,7 +26,7 @@ const RecentPresentations: React.FC<RecentPresentationsProps> = ({
   const [error, setError] = useState('');
   const { token } = useAuth();
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ppt-maker-ezzr.onrender.com/api';
 
   useEffect(() => {
     if (isOpen && token) {

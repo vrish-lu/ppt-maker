@@ -586,7 +586,7 @@ export class DownloadService {
         const src = imgElement.src;
         
         // Only convert if it's a cross-origin image (server URL)
-        if (src && (src.includes('localhost:3002') || src.includes('http'))) {
+        if (src && (src.includes('ppt-maker-ezzr.onrender.com') || src.includes('http'))) {
           const promise = this.convertImageToDataUrl(imgElement);
           conversionPromises.push(promise);
         }

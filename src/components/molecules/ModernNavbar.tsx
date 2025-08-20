@@ -280,7 +280,7 @@ const ModernNavbar: React.FC<ModernNavbarProps> = ({
             const token = localStorage.getItem('authToken');
             if (token) {
               console.log('🔐 Token found, calling delete API...');
-              const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/auth/delete-all-data`;
+              const apiUrl = `${import.meta.env.VITE_API_URL || 'https://ppt-maker-ezzr.onrender.com/api'}/auth/delete-all-data`;
               console.log('🌐 API URL:', apiUrl);
               
               fetch(apiUrl, {

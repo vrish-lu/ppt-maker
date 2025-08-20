@@ -33,7 +33,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     email: user?.email || ''
   });
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ppt-maker-ezzr.onrender.com/api';
 
   useEffect(() => {
     if (user) {

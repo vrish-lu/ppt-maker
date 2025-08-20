@@ -789,7 +789,7 @@ const AppContent = () => {
     
     setIsSaving(true);
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ppt-maker-ezzr.onrender.com/api';
       const token = localStorage.getItem('authToken');
       
       // Note: Slides are now created above from outline, no need to recreate here
@@ -1521,7 +1521,7 @@ const AppContent = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const BACKEND_URL = "http://localhost:3002";
+  const BACKEND_URL = "https://ppt-maker-ezzr.onrender.com";
 
   // Start typing animation when outline is loaded - with persistence
   const typingInitializedRef = React.useRef(false);
@@ -1803,7 +1803,7 @@ const AppContent = () => {
     typingInitializedRef.current = false;
     try {
       // Call backend to generate outline and bullets
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ppt-maker-ezzr.onrender.com/api';
       console.log('🌐 Making API call to:', `${API_BASE_URL}/generate`);
       console.log('📤 Request payload:', {
         title: topic,
@@ -2563,7 +2563,7 @@ const AppContent = () => {
         if (showImage && slide.image && slide.image.url) {
           try {
             let imagePath = slide.image.url;
-            if (slide.image.url.includes('localhost:3002') || slide.image.url.startsWith('http')) {
+            if (slide.image.url.includes('ppt-maker-ezzr.onrender.com') || slide.image.url.startsWith('http')) {
               try {
                 const response = await fetch(slide.image.url, { mode: 'cors', credentials: 'omit' });
                 if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -5676,7 +5676,7 @@ const AppContent = () => {
             const token = localStorage.getItem('authToken');
             if (token) {
               console.log('🔐 Token found, calling delete API...');
-              const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/auth/delete-all-data`;
+              const apiUrl = `${import.meta.env.VITE_API_URL || 'https://ppt-maker-ezzr.onrender.com/api'}/auth/delete-all-data`;
               console.log('🌐 API URL:', apiUrl);
               
               fetch(apiUrl, {
