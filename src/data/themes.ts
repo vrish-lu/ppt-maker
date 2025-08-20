@@ -11,22 +11,22 @@ export const defaultThemes: ThemeTemplate[] = [
       secondary: '#1e3a8a',
       accent: '#3b82f6',
       background: '#ffffff',
-      text: '#1f2937'
+      text: '#000000'
     },
     fonts: {
       heading: {
-        family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        weight: '700',
+        family: 'Libre Baskerville, serif',
+        weight: '400',
         size: '1.5rem'
       },
       body: {
-        family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        family: 'Open Sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         weight: '400',
         size: '1rem'
       },
       accent: {
-        family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        weight: '600',
+        family: 'Open Sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '400',
         size: '1.125rem'
       }
     },
@@ -72,6 +72,7 @@ export const defaultThemes: ThemeTemplate[] = [
       shadow: 'shadow-xl',
       spacing: 'p-8'
     },
+    backgroundGradient: 'bg-gradient-to-r from-yellow-50 to-orange-500',
    preview: 'bg-gradient-to-r from-purple-500 to-pink-500'
   },
   {
@@ -83,23 +84,23 @@ export const defaultThemes: ThemeTemplate[] = [
       primary: '#374151',
       secondary: '#4b5563',
       accent: '#6b7280',
-      background: '#ffffff',
+      background: '#e8e8e2',
       text: '#1f2937'
     },
     fonts: {
       heading: {
-        family: 'SF Pro Display, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        weight: '600',
+        family: 'Hubot Sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '700',
         size: '1.5rem'
       },
       body: {
-        family: 'SF Pro Text, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        weight: '300',
+        family: 'Roboto Condensed, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        weight: '400',
         size: '1rem'
       },
       accent: {
-        family: 'SF Pro Text, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        weight: '500',
+        family: 'Roboto Condensed, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        weight: '400',
         size: '1.125rem'
       }
     },
@@ -117,16 +118,16 @@ export const defaultThemes: ThemeTemplate[] = [
     description: 'Professional green theme for corporate and financial presentations',
     category: 'business',
     colors: {
-      primary: '#047857',  // Title color 
-      secondary: '#065f46',  // Secondary text
-      accent: '#059669',   // Bullet points color
-      background: '#ffffff', // Background color
-      text: '#047857' // Body text color 
+      primary: '#047857',
+      secondary: '#065f46',
+      accent: '#059669',
+      background: '#ffffff',
+      text: '#333333'
     },
     fonts: {
       heading: {
-        family: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-        weight: '700',
+        family: 'Kanit, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '300',
         size: '1.625rem'
       },
       body: {
@@ -145,7 +146,7 @@ export const defaultThemes: ThemeTemplate[] = [
       shadow: 'shadow-md',
       spacing: 'p-6'
     },
-    backgroundImage: '/1.jpg',
+    backgroundImage: '/5.jpg',
     preview: 'bg-green-600'
   },
   {
@@ -198,18 +199,18 @@ export const defaultThemes: ThemeTemplate[] = [
     },
     fonts: {
       heading: {
-        family: 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        weight: '800',
+        family: 'Patrick Hand, cursive, sans-serif',
+        weight: '400',
         size: '1.75rem'
       },
       body: {
-        family: 'Open Sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        family: 'Patrick Hand, cursive, sans-serif',
         weight: '400',
         size: '1.125rem'
       },
       accent: {
-        family: 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        weight: '600',
+        family: 'Patrick Hand, cursive, sans-serif',
+        weight: '400',
         size: '1.25rem'
       }
     },
@@ -218,45 +219,45 @@ export const defaultThemes: ThemeTemplate[] = [
       shadow: 'shadow-lg',
       spacing: 'p-6'
     },
-    backgroundImage: '/1.jpg',
+    backgroundImage: '/5.jpg',
     preview: 'bg-orange-600'
   },
   {
-    id: 'elegant-purple',
-    name: 'Elegant Purple',
-    description: 'Sophisticated purple theme for luxury and premium presentations',
-    category: 'professional',
+    id: 'kraft',
+    name: 'Kraft',
+    description: 'Warm kraft paper-inspired theme with natural colors and clean typography',
+    category: 'minimal',
     colors: {
-      primary: '#5b21b6',
-      secondary: '#4c1d95',
-      accent: '#7c3aed',
-      background: '#ffffff',
-      text: '#1f2937'
+      primary: '#282824',
+      secondary: '#5f5f59',
+      accent: '#5f5f59',
+      background: '#eeece6',
+      text: '#5f5f59'
     },
     fonts: {
       heading: {
-        family: 'Playfair Display, Georgia, "Times New Roman", serif',
+        family: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         weight: '700',
-        size: '1.875rem'
+        size: '1.5rem'
       },
       body: {
-        family: 'Lora, Georgia, "Times New Roman", serif',
+        family: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         weight: '400',
-        size: '1.125rem'
+        size: '1rem'
       },
       accent: {
-        family: 'Playfair Display, Georgia, "Times New Roman", serif',
-        weight: '600',
-        size: '1.375rem'
+        family: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '400',
+        size: '1.125rem'
       }
     },
     styles: {
-      borderRadius: 'rounded-xl',
-      shadow: 'shadow-xl',
-      spacing: 'p-8'
+      borderRadius: 'rounded-lg',
+      shadow: 'shadow-md',
+      spacing: 'p-6'
     },
     backgroundImage: '/1.jpg',
-    preview: 'bg-purple-600'
+    preview: 'bg-amber-700'
   },
   {
     id: 'clean-white',
@@ -272,17 +273,17 @@ export const defaultThemes: ThemeTemplate[] = [
     },
     fonts: {
       heading: {
-        family: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+        family: 'Playfair Display, Georgia, serif',
         weight: '700',
         size: '1.5rem'
       },
       body: {
-        family: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+        family: 'Open Sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         weight: '400',
         size: '1rem'
       },
       accent: {
-        family: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+        family: 'Open Sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         weight: '500',
         size: '1.125rem'
       }
@@ -294,6 +295,268 @@ export const defaultThemes: ThemeTemplate[] = [
     },
     backgroundImage: '/1.jpg',
     preview: 'bg-black'
+  },
+  {
+    id: 'daktilo',
+    name: 'Daktilo',
+    description: 'Typewriter-inspired theme with monospace typography and vintage aesthetics',
+    category: 'creative',
+    colors: {
+      primary: '#151617',
+      secondary: '#151617',
+      accent: '#151617',
+      background: '#f8ebe4',
+      text: '#151617'
+    },
+    fonts: {
+      heading: {
+        family: 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '900',
+        size: '1.75rem'
+      },
+      body: {
+        family: 'Inconsolata, "Courier New", monospace',
+        weight: '400',
+        size: '1rem'
+      },
+      accent: {
+        family: 'Inconsolata, "Courier New", monospace',
+        weight: '400',
+        size: '1.125rem'
+      }
+    },
+    styles: {
+      borderRadius: 'rounded-lg',
+      shadow: 'shadow-md',
+      spacing: 'p-6'
+    },
+    backgroundImage: '/1.jpg',
+    preview: 'bg-gray-800'
+  },
+  {
+    id: 'plant-shop',
+    name: 'Plant Shop',
+    description: 'Natural plant-inspired theme with organic colors and elegant typography',
+    category: 'creative',
+    colors: {
+      primary: '#233e32',
+      secondary: '#45423c',
+      accent: '#45423c',
+      background: '#fcfbf7',
+      text: '#45423c'
+    },
+    fonts: {
+      heading: {
+        family: 'Alice, serif',
+        weight: '400',
+        size: '1.75rem'
+      },
+      body: {
+        family: 'Lora, Georgia, "Times New Roman", serif',
+        weight: '400',
+        size: '1rem'
+      },
+      accent: {
+        family: 'Lora, Georgia, "Times New Roman", serif',
+        weight: '400',
+        size: '1.125rem'
+      }
+    },
+    styles: {
+      borderRadius: 'rounded-lg',
+      shadow: 'shadow-md',
+      spacing: 'p-6'
+    },
+    backgroundImage: '/1.jpg',
+    preview: 'bg-green-700'
+  },
+  {
+    id: 'corporate-blue',
+    name: 'Corporate Blue',
+    description: 'Professional corporate theme with modern typography',
+    category: 'professional',
+    colors: {
+      primary: '#1e3a8a',
+      secondary: '#3b82f6',
+      accent: '#60a5fa',
+      background: '#ffffff',
+      text: '#1e293b'
+    },
+    fonts: {
+      heading: {
+        family: 'Source Sans Pro, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '700',
+        size: '1.75rem'
+      },
+      body: {
+        family: 'Source Sans Pro, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '400',
+        size: '1.125rem'
+      },
+      accent: {
+        family: 'Source Sans Pro, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '600',
+        size: '1.25rem'
+      }
+    },
+    styles: {
+      borderRadius: 'rounded-lg',
+      shadow: 'shadow-md',
+      spacing: 'p-6'
+    },
+    backgroundImage: '/1.jpg',
+    preview: 'bg-blue-700'
+  },
+
+  {
+    id: 'minimalist-black',
+    name: 'Minimalist Black',
+    description: 'Ultra-minimal black theme with clean typography',
+    category: 'minimal',
+    colors: {
+      primary: '#000000',
+      secondary: '#1f2937',
+      accent: '#374151',
+      background: '#ffffff',
+      text: '#000000'
+    },
+    fonts: {
+      heading: {
+        family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '900',
+        size: '2rem'
+      },
+      body: {
+        family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '300',
+        size: '1.125rem'
+      },
+      accent: {
+        family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '500',
+        size: '1.25rem'
+      }
+    },
+    styles: {
+      borderRadius: 'rounded-none',
+      shadow: 'shadow-sm',
+      spacing: 'p-4'
+    },
+    backgroundImage: '/1.jpg',
+    preview: 'bg-black'
+  },
+
+  {
+    id: 'luxury-gold',
+    name: 'Luxury Gold',
+    description: 'Premium gold theme for luxury and high-end presentations',
+    category: 'professional',
+    colors: {
+      primary: '#92400e',
+      secondary: '#b45309',
+      accent: '#d97706',
+      background: '#fefce8',
+      text: '#451a03'
+    },
+    fonts: {
+      heading: {
+        family: 'Crimson Text, Georgia, "Times New Roman", serif',
+        weight: '700',
+        size: '2rem'
+      },
+      body: {
+        family: 'Crimson Text, Georgia, "Times New Roman", serif',
+        weight: '400',
+        size: '1.125rem'
+      },
+      accent: {
+        family: 'Crimson Text, Georgia, "Times New Roman", serif',
+        weight: '600',
+        size: '1.375rem'
+      }
+    },
+    styles: {
+      borderRadius: 'rounded-xl',
+      shadow: 'shadow-xl',
+      spacing: 'p-8'
+    },
+    backgroundGradient: 'bg-gradient-to-br from-amber-50 to-yellow-100',
+    preview: 'bg-gradient-to-r from-amber-600 to-yellow-600'
+  },
+  {
+    id: 'tech-cyber',
+    name: 'Tech Cyber',
+    description: 'Cyberpunk-inspired theme with neon colors and futuristic fonts',
+    category: 'modern',
+    colors: {
+      primary: '#10b981',
+      secondary: '#34d399',
+      accent: '#6ee7b7',
+      background: '#0f172a',
+      text: '#10b981'
+    },
+    fonts: {
+      heading: {
+        family: 'Space Grotesk, "Courier New", monospace',
+        weight: '700',
+        size: '2rem'
+      },
+      body: {
+        family: 'Space Grotesk, "Courier New", monospace',
+        weight: '400',
+        size: '1.125rem'
+      },
+      accent: {
+        family: 'Space Grotesk, "Courier New", monospace',
+        weight: '600',
+        size: '1.375rem'
+      }
+    },
+    styles: {
+      borderRadius: 'rounded-none',
+      shadow: 'shadow-2xl',
+      spacing: 'p-8'
+    },
+    backgroundGradient: 'bg-gradient-to-br from-slate-900 via-green-900 to-emerald-900',
+    preview: 'bg-gradient-to-r from-emerald-500 to-green-500'
+  },
+
+  {
+    id: 'flamingo',
+    name: 'Flamingo',
+    description: 'Elegant flamingo-inspired theme with warm colors and modern typography',
+    category: 'creative',
+    colors: {
+      primary: '#1f1e1e',
+      secondary: '#5e5858',
+      accent: '#e91e63',
+      background: '#fffafa',
+      text: '#5e5858'
+    },
+    fonts: {
+      heading: {
+        family: 'Red Hat Text, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '400',
+        size: '1.75rem'
+      },
+      body: {
+        family: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        weight: '300',
+        size: '1.125rem'
+      },
+      accent: {
+        family: 'Red Hat Text, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        weight: '400',
+        size: '1.25rem'
+      }
+    },
+    styles: {
+      borderRadius: 'rounded-lg',
+      shadow: 'shadow-md',
+      spacing: 'p-6'
+    },
+    backgroundGradient: 'bg-gradient-to-br from-pink-50 to-rose-100',
+    preview: 'bg-gradient-to-r from-pink-400 to-rose-400'
   }
 ];
 

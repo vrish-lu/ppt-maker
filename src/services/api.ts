@@ -1,21 +1,22 @@
 import { SlideCard } from '../types';
 
 // API base URL - change this for production
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
 
 /**
  * Generate slides based on a topic using the backend API
  * @param topic - The presentation topic
+ * @param theme - The selected theme for styling
  * @returns Promise<SlideCard[]> - Array of generated slides
  */
-export const generateSlides = async (topic: string): Promise<SlideCard[]> => {
+export const generateSlides = async (topic: string, theme?: any): Promise<SlideCard[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/generate-slides`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ topic }),
+      body: JSON.stringify({ topic, theme }),
     });
 
     if (!response.ok) {
@@ -48,16 +49,17 @@ export const generateSlides = async (topic: string): Promise<SlideCard[]> => {
 /**
  * Regenerate content for a specific slide using the backend API
  * @param slideTitle - The title of the slide to regenerate
+ * @param theme - The selected theme for styling
  * @returns Promise<SlideCard> - The regenerated slide
  */
-export const regenerateSlide = async (slideTitle: string): Promise<SlideCard> => {
+export const regenerateSlide = async (slideTitle: string, theme?: any): Promise<SlideCard> => {
   try {
     const response = await fetch(`${API_BASE_URL}/regenerate-slide`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ slideTitle }),
+      body: JSON.stringify({ slideTitle, theme }),
     });
 
     if (!response.ok) {

@@ -34,7 +34,7 @@ export const generateSlides = async (topic: string): Promise<SlideCard[]> => {
       messages: [
         {
           role: "system",
-          content: "You are a presentation expert who creates engaging, informative slide content. Always respond with valid JSON."
+          content: "You are a presentation expert who creates engaging, informative slide content , storylike structure. Always respond with valid JSON."
         },
         {
           role: "user",

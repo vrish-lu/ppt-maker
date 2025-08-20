@@ -1,0 +1,3097 @@
+import React, { useState, useRef, useEffect } from 'react';
+import './App.css';
+import SlideCard from './components/atoms/Card';
+import Stepper from './components/atoms/Stepper';
+import SlideList from './components/organisms/SlideList';
+import DownloadButton from './components/molecules/DownloadButton';
+import EditablePptxButton from './components/molecules/EditablePptxButton';
+import ScreenshotButton from './components/molecules/ScreenshotButton';
+import Navbar from './components/molecules/Navbar';
+
+import SlideTiptapEditor from './components/molecules/SlideTiptapEditor';
+import { ThemeTemplate, SlideCard as SlideCardType } from './types';
+import { getDefaultTheme } from './data/themes';
+import TypingAnimation from './components/atoms/TypingAnimation';
+import { ScreenshotService } from './services/screenshot';
+import { DownloadService } from './services/download';
+import pptxgen from 'pptxgenjs';
+import { defaultThemes } from './data/themes';
+import { 
+  getContrastingTextColors, 
+  getFontFamily, 
+  getFontSize, 
+  getTextAlignment, 
+  getFontWeight,
+  normalizeColor 
+} from './utils/themeColors';
+import pastelBg from './assets/images/pastel-bg.jpg';
+
+const STEPS = [
+  { label: 'Create', description: 'Start your presentation' },
+  { label: 'Generate Content', description: 'AI-powered content' },
+  { label: 'Outline', description: 'Review and edit structure' },
+  { label: 'Customize', description: 'Fine-tune design' },
+  { label: 'Generate Slides', description: 'Create final slides' }
+];
+
+const THEME_PREVIEWS = [
+  {
+    key: 'modern-blue',
+    label: 'Modern Blue',
+    style: { 
+      background: '#ffffff', 
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderColor: '#1e40af'
+    },
+    titleClass: 'text-2xl font-bold text-blue-800 mb-1',
+    bodyClass: 'text-base text-gray-700',
+    border: 'border-blue-600',
+  },
+  {
+    key: 'creative-gradient',
+    label: 'Creative Gradient',
+    style: { 
+      background: 'linear-gradient(135deg, #fef3c7 0%, #fbbf24 100%)', 
+      fontFamily: 'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderColor: '#fbbf24'
+    },
+    titleClass: 'text-2xl font-bold text-gray-800 mb-1',
+    bodyClass: 'text-base text-gray-700',
+    border: 'border-yellow-400',
+  },
+  {
+    key: 'minimal-gray',
+    label: 'Minimal Gray',
+    style: { 
+      background: '#ffffff', 
+      fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderColor: '#374151'
+    },
+    titleClass: 'text-2xl font-semibold text-gray-700 mb-1',
+    bodyClass: 'text-base text-gray-600 font-light',
+    border: 'border-gray-500',
+  },
+  {
+    key: 'business-green',
+    label: 'Business Green',
+    style: { 
+      background: '#ffffff', 
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      borderColor: '#047857'
+    },
+    titleClass: 'text-2xl font-bold text-green-700 mb-1',
+    bodyClass: 'text-base text-green-600',
+    border: 'border-green-600',
+  },
+  {
+    key: 'modern-dark',
+    label: 'Modern Dark',
+    style: { 
+      background: '#111827', 
+      fontFamily: 'JetBrains Mono, "Fira Code", "Cascadia Code", monospace',
+      borderColor: '#374151'
+    },
+    titleClass: 'text-2xl font-bold text-white mb-1',
+    bodyClass: 'text-base text-gray-300',
+    border: 'border-gray-600',
+  },
+  {
+    key: 'warm-orange',
+    label: 'Warm Orange',
+    style: { 
+      background: '#ffffff', 
+      fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderColor: '#c2410c'
+    },
+    titleClass: 'text-2xl font-extrabold text-orange-700 mb-1',
+    bodyClass: 'text-base text-gray-700',
+    border: 'border-orange-600',
+  },
+  {
+    key: 'elegant-purple',
+    label: 'Elegant Purple',
+    style: { 
+      background: '#4c1d95', 
+      fontFamily: 'Playfair Display, Georgia, "Times New Roman", serif',
+      borderColor: '#ffffff'
+    },
+    titleClass: 'text-2xl font-bold text-white mb-1',
+    bodyClass: 'text-base text-gray-200',
+    border: 'border-white',
+  },
+  {
+    key: 'clean-white',
+    label: 'Clean White',
+    style: { 
+      background: '#ffffff', 
+      fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+      borderColor: '#000000'
+    },
+    titleClass: 'text-2xl font-bold text-black mb-1',
+    bodyClass: 'text-base text-black',
+    border: 'border-black',
+  },
+  {
+    key: 'tech-futuristic',
+    label: 'Tech Futuristic',
+    style: { 
+      background: 'linear-gradient(135deg, #0a0a0a 0%, #1e293b 100%)', 
+      fontFamily: 'Orbitron, "Courier New", monospace',
+      borderColor: '#00ffff'
+    },
+    titleClass: 'text-2xl font-black text-cyan-400 mb-1',
+    bodyClass: 'text-base text-cyan-300',
+    border: 'border-cyan-500',
+  },
+  {
+    key: 'vintage-retro',
+    label: 'Vintage Retro',
+    style: { 
+      background: 'linear-gradient(135deg, #fef3c7 0%, #f59e0b 100%)', 
+      fontFamily: 'Georgia, "Times New Roman", serif',
+      borderColor: '#8b4513'
+    },
+    titleClass: 'text-2xl font-bold text-amber-900 mb-1',
+    bodyClass: 'text-base text-amber-800',
+    border: 'border-amber-700',
+  },
+  {
+    key: 'corporate-blue',
+    label: 'Corporate Blue',
+    style: { 
+      background: '#ffffff', 
+      fontFamily: 'Source Sans Pro, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderColor: '#1e3a8a'
+    },
+    titleClass: 'text-2xl font-bold text-blue-900 mb-1',
+    bodyClass: 'text-base text-slate-700',
+    border: 'border-blue-700',
+  },
+  {
+    key: 'creative-pink',
+    label: 'Creative Pink',
+    style: { 
+      background: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)', 
+      fontFamily: 'Quicksand, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderColor: '#be185d'
+    },
+    titleClass: 'text-2xl font-bold text-pink-700 mb-1',
+    bodyClass: 'text-base text-gray-700',
+    border: 'border-pink-500',
+  },
+  {
+    key: 'minimalist-black',
+    label: 'Minimalist Black',
+    style: { 
+      background: '#ffffff', 
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderColor: '#000000'
+    },
+    titleClass: 'text-3xl font-black text-black mb-1',
+    bodyClass: 'text-base text-black font-light',
+    border: 'border-black',
+  },
+  {
+    key: 'nature-green',
+    label: 'Nature Green',
+    style: { 
+      background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', 
+      fontFamily: 'Nunito, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderColor: '#166534'
+    },
+    titleClass: 'text-2xl font-extrabold text-green-800 mb-1',
+    bodyClass: 'text-base text-green-700',
+    border: 'border-green-600',
+  },
+  {
+    key: 'luxury-gold',
+    label: 'Luxury Gold',
+    style: { 
+      background: 'linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)', 
+      fontFamily: 'Crimson Text, Georgia, "Times New Roman", serif',
+      borderColor: '#92400e'
+    },
+    titleClass: 'text-2xl font-bold text-amber-900 mb-1',
+    bodyClass: 'text-base text-amber-800',
+    border: 'border-amber-600',
+  },
+  {
+    key: 'tech-cyber',
+    label: 'Tech Cyber',
+    style: { 
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', 
+      fontFamily: 'Space Grotesk, "Courier New", monospace',
+      borderColor: '#10b981'
+    },
+    titleClass: 'text-2xl font-bold text-emerald-400 mb-1',
+    bodyClass: 'text-base text-emerald-300',
+    border: 'border-emerald-500',
+  },
+  {
+    key: 'artistic-watercolor',
+    label: 'Artistic Watercolor',
+    style: { 
+      background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)', 
+      fontFamily: 'Dancing Script, cursive, serif',
+      borderColor: '#7c3aed'
+    },
+    titleClass: 'text-3xl font-bold text-purple-700 mb-1',
+    bodyClass: 'text-base text-purple-600',
+    border: 'border-purple-500',
+  }
+];
+
+const App = () => {
+  const [slides, setSlides] = useState<SlideCardType[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [regeneratingSlides, setRegeneratingSlides] = useState<Set<string>>(new Set());
+  const [selectedTheme, setSelectedTheme] = useState<ThemeTemplate>(getDefaultTheme());
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [presentationTitle, setPresentationTitle] = useState('');
+  const [showElements, setShowElements] = useState(false);
+  const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedThemeKey, setSelectedThemeKey] = useState('elegant-purple');
+  const [amountOfText, setAmountOfText] = useState('Detailed');
+  const [slideCount, setSlideCount] = useState(5);
+  const [imageSource, setImageSource] = useState('AI images');
+  const [imageStyle, setImageStyle] = useState('');
+  const [outline, setOutline] = useState([]); // Start empty
+  
+  // Debug outline changes
+  useEffect(() => {
+    console.log('Outline state changed:', outline);
+    // Test if HTML content is being stored
+    outline.forEach((slide, index) => {
+      if (slide.titleHtml) {
+        console.log(`Slide ${index} titleHtml:`, slide.titleHtml);
+      }
+      if (slide.bulletsHtml) {
+        console.log(`Slide ${index} bulletsHtml:`, slide.bulletsHtml);
+      }
+    });
+  }, [outline]);
+  const [finalTitle, setFinalTitle] = useState('');
+  const [generationStatus, setGenerationStatus] = useState('idle'); // idle | loading | success | error
+  const [generateInput, setGenerateInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingProgress, setTypingProgress] = useState({ sectionIndex: 0, bulletIndex: 0 });
+  const [typingBullets, setTypingBullets] = useState<{[key: string]: string}>({});
+  const [generatedImages, setGeneratedImages] = useState<{[key: string]: string}>({});
+  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const [menuDropdownOpen, setMenuDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef(null);
+  const menuDropdownRef = useRef(null);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [imageRegenerateModalOpen, setImageRegenerateModalOpen] = useState(false);
+  const [regeneratingImageIndex, setRegeneratingImageIndex] = useState<number | null>(null);
+  const [customImagePrompt, setCustomImagePrompt] = useState('');
+  
+  // Force reset regenerating state on component mount
+  useEffect(() => {
+    setRegeneratingImageIndex(null);
+  }, []);
+  
+  // Debug regenerating state
+  useEffect(() => {
+    console.log('RegeneratingImageIndex changed:', regeneratingImageIndex);
+  }, [regeneratingImageIndex]);
+
+  // Helper function to check if all content is ready
+  const isAllContentReady = () => {
+    // Check if outline has content
+    if (outline.length === 0) return false;
+    
+    // Check if all slides have titles and bullets
+    const hasAllContent = outline.every(slide => 
+      slide.title && slide.title.trim() !== '' && 
+      slide.bullets && slide.bullets.length > 0 && 
+      slide.bullets.every(bullet => bullet && bullet.trim() !== '')
+    );
+    
+    // Check if all images are generated (if image source is not 'None')
+    const hasAllImages = imageSource === 'None' || 
+      (outline.length > 0 && 
+       outline.every((_, index) => generatedImages[index.toString()]));
+    
+    return hasAllContent && hasAllImages;
+  };
+  
+  // Add global reset function for debugging
+  useEffect(() => {
+    (window as any).resetImageGeneration = () => {
+      setRegeneratingImageIndex(null);
+      setImageRegenerateModalOpen(false);
+      setCustomImagePrompt('');
+      console.log('Image generation state reset manually');
+    };
+    
+    // Add test function for image URLs
+    (window as any).testImageUrl = (url: string) => {
+      console.log('Testing image URL:', url);
+      fetch(url)
+        .then(response => {
+          console.log('Image URL test result:', response.status, response.ok);
+        })
+        .catch(error => {
+          console.error('Image URL test error:', error);
+        });
+    };
+    
+    // Add force reset function
+    (window as any).forceReset = () => {
+      setRegeneratingImageIndex(null);
+      setImageRegenerateModalOpen(false);
+      setCustomImagePrompt('');
+      console.log('Force reset completed');
+      alert('State reset completed');
+    };
+  }, []);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setThemeDropdownOpen(false);
+      }
+      if (menuDropdownRef.current && !menuDropdownRef.current.contains(event.target)) {
+        setMenuDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const BACKEND_URL = "http://localhost:3002";
+
+  // Start typing animation when outline is loaded
+  React.useEffect(() => {
+    if (outline.length > 0 && !isGenerating && isTyping) {
+      // Start typing animation for the first bullet of the first section
+      setTypingProgress({ sectionIndex: 0, bulletIndex: 0 });
+      // Initialize typing bullets with empty strings for all bullets
+      const initialTypingBullets: {[key: string]: string} = {};
+      outline.forEach((section, sectionIdx) => {
+        section.bullets.forEach((bullet, bulletIdx) => {
+          const key = `${sectionIdx}-${bulletIdx}`;
+          initialTypingBullets[key] = ''; // Start with empty string
+        });
+      });
+      setTypingBullets(initialTypingBullets);
+    }
+  }, [outline, isGenerating, isTyping]);
+
+  // Generate images when entering customize step
+  React.useEffect(() => {
+    if (currentStep === 3 && outline.length > 0 && imageSource !== 'None' && Object.keys(generatedImages).length === 0) {
+      generateImagesForSlides();
+    }
+  }, [currentStep, outline, imageSource]);
+
+  // Generate new slides based on topic
+  const handleGenerateSlides = async (topic: string) => {
+    setIsGenerating(true);
+    try {
+      const newSlides = await generateSlides(topic, selectedTheme);
+      setSlides(newSlides);
+      setPresentationTitle(topic);
+    } catch (error) {
+      console.error('Failed to generate slides:', error);
+      // You could add a toast notification here
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Update a specific slide
+  const handleUpdateSlide = (updatedSlide: SlideCardType) => {
+    setSlides(prevSlides => 
+      prevSlides.map(slide => 
+        slide.id === updatedSlide.id ? updatedSlide : slide
+      )
+    );
+  };
+
+  // Regenerate content for a specific slide
+  const handleRegenerateSlide = async (slideId: string) => {
+    const slide = slides.find(s => s.id === slideId);
+    if (!slide) return;
+
+    setRegeneratingSlides(prev => new Set(prev).add(slideId));
+    
+    try {
+      const regeneratedSlide = await regenerateSlide(slide.title, selectedTheme);
+      
+      // Update the slide with new content but keep the original ID
+      const updatedSlide = {
+        ...regeneratedSlide,
+        id: slideId // Keep the original ID to maintain position
+      };
+      
+      setSlides(prevSlides => 
+        prevSlides.map(s => 
+          s.id === slideId ? updatedSlide : s
+        )
+      );
+    } catch (error) {
+      console.error('Failed to regenerate slide:', error);
+      // You could add a toast notification here
+    } finally {
+      setRegeneratingSlides(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(slideId);
+        return newSet;
+      });
+    }
+  };
+
+  // Handle theme change
+  const handleThemeChange = (theme: ThemeTemplate) => {
+    setSelectedTheme(theme);
+  };
+
+  // Handle download
+  const handleDownload = async (format: 'pdf' | 'pptx' | 'html') => {
+    if (slides.length === 0) {
+      alert('No slides to download. Please generate some slides first.');
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+              DownloadService.download(format, presentationTitle);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Download failed. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleAddElement = (svgPath: string) => {
+    // TODO: Insert the element into the selected slide
+    console.log('Add element:', svgPath);
+  };
+
+  // Select a slide by id
+  const handleSelectSlide = (slideId: string) => {
+    setSelectedSlideId(slideId);
+  };
+
+  // Find the selected slide
+  const selectedSlide = slides.find(s => s.id === selectedSlideId) || slides[0];
+
+  // Stepper navigation handler
+  const handleStepClick = (stepIdx: number) => {
+    if (stepIdx <= currentStep) {
+      setCurrentStep(stepIdx);
+    }
+  };
+
+  // Final generation handler
+  const handleFinalGenerate = async () => {
+    setGenerationStatus('loading');
+    try {
+      const response = await fetch('http://localhost:3002/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: finalTitle,
+          outline,
+          theme: selectedThemeKey,
+          amountOfText,
+          imageSource,
+          imageStyle
+        })
+      });
+      if (!response.ok) throw new Error('Failed to generate slides');
+      const data = await response.json();
+      setSlides(data.slides || []);
+      setGenerationStatus('success');
+      setCurrentStep(0); // Optionally, go back to the start or show a new page
+    } catch (err) {
+      setGenerationStatus('error');
+      alert('Failed to generate slides. Please try again.');
+    }
+  };
+
+  // When user enters a topic and clicks Next on Generate, set the title and create a default outline
+  const handleNextFromGenerate = async () => {
+    const topic = generateInput.trim();
+    if (!topic) return;
+    setPresentationTitle(topic);
+    setFinalTitle(topic);
+    setCurrentStep(2);
+    setIsGenerating(true);
+    setIsTyping(true);
+    setTypingProgress({ sectionIndex: 0, bulletIndex: 0 });
+    setTypingBullets({}); // Reset typing bullets
+    try {
+      // Call backend to generate outline and bullets
+      const response = await fetch('http://localhost:3002/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: topic,
+          outline: [], // Let backend generate outline
+          theme: selectedThemeKey,
+          amountOfText,
+          slideCount,
+          imageSource,
+          imageStyle
+        })
+      });
+      if (!response.ok) throw new Error('Failed to generate outline');
+      const data = await response.json();
+      // Set outline to generated slides (titles and bullets)
+      setOutline((data.slides || []).map(slide => ({ title: slide.title, bullets: slide.bullets })));
+      
+      // Store generated images if any
+      if (data.slides) {
+        const images: {[key: string]: string} = {};
+        data.slides.forEach((slide: any, idx: number) => {
+          if (slide.image && slide.image.url) {
+            images[idx.toString()] = slide.image.url.startsWith('/uploads/')
+              ? BACKEND_URL + slide.image.url
+              : slide.image.url;
+          }
+        });
+        setGeneratedImages(images);
+      }
+    } catch (err) {
+      setOutline([
+        { title: `Introduction to ${topic}`, bullets: [''] },
+        { title: `Key Concepts of ${topic}`, bullets: [''] },
+        { title: `Applications of ${topic}`, bullets: [''] }
+      ]);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Generate images for all slides
+  const generateImagesForSlides = async () => {
+    if (imageSource === 'None' || outline.length === 0) return;
+    
+    setIsGeneratingImages(true);
+    try {
+      const imagePromises = outline.map(async (section, idx) => {
+        const prompt = `${section.title} ${imageStyle || ''}`.trim();
+        const response = await fetch('http://localhost:3002/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            prompt, 
+            style: imageStyle,
+            slideIndex: idx 
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return { idx: idx.toString(), url: data.imageUrl };
+        }
+        return null;
+      });
+
+      const results = await Promise.all(imagePromises);
+      const newImages: {[key: string]: string} = {};
+      results.forEach(result => {
+        if (result) {
+          newImages[result.idx] = result.url.startsWith('/uploads/')
+            ? BACKEND_URL + result.url
+            : result.url;
+        }
+      });
+      setGeneratedImages(newImages);
+    } catch (error) {
+      console.error('Failed to generate images:', error);
+    } finally {
+      setIsGeneratingImages(false);
+    }
+  };
+
+  const handleRegenerateImageWithPrompt = (slideIndex: number) => {
+    setRegeneratingImageIndex(slideIndex);
+    setCustomImagePrompt(outline[slideIndex]?.title || '');
+    setImageRegenerateModalOpen(true);
+  };
+
+  const handleRegenerateImage = async () => {
+    if (regeneratingImageIndex === null || !customImagePrompt.trim()) return;
+    
+    const currentIndex = regeneratingImageIndex; // Store the current index
+    console.log('Starting image regeneration for index:', currentIndex, 'with prompt:', customImagePrompt);
+    
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (regeneratingImageIndex === currentIndex) {
+        alert('Image generation is taking too long. Please try again.');
+        setRegeneratingImageIndex(null);
+      }
+    }, 30000); // 30 second timeout
+    
+    try {
+      const prompt = `${customImagePrompt} ${imageStyle || ''}`.trim();
+      console.log('Sending request with prompt:', prompt);
+      
+      const requestBody = { 
+        prompt, 
+        style: imageStyle,
+        slideIndex: currentIndex 
+      };
+      console.log('Request body:', requestBody);
+      
+      const response = await fetch('http://localhost:3002/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+      
+      clearTimeout(timeoutId); // Clear timeout on success
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (!data.imageUrl) {
+          console.error('No imageUrl in response:', data);
+          alert('Invalid response from server - no image URL received');
+          setRegeneratingImageIndex(null);
+          return;
+        }
+        
+        const newImages = { ...generatedImages };
+        const imageUrl = data.imageUrl.startsWith('/uploads/')
+          ? BACKEND_URL + data.imageUrl
+          : data.imageUrl;
+        
+        console.log('Setting image URL:', imageUrl);
+        console.log('Current generatedImages before update:', generatedImages);
+        newImages[currentIndex.toString()] = imageUrl;
+        setGeneratedImages(newImages);
+        
+        console.log('Updated generatedImages:', newImages);
+        
+        // Close modal and reset states
+        console.log('Closing modal and resetting states...');
+        setImageRegenerateModalOpen(false);
+        setCustomImagePrompt('');
+        setRegeneratingImageIndex(null);
+        console.log('Modal states reset successfully');
+        
+        // Force a re-render and verify the update
+        setTimeout(() => {
+          console.log('Current generatedImages after update:', generatedImages);
+          console.log('Image should now be available at:', newImages[currentIndex.toString()]);
+          
+          // Test if the image URL is accessible
+          fetch(imageUrl)
+            .then(response => {
+              console.log('Image URL test result:', response.status, response.ok);
+              if (!response.ok) {
+                console.error('Image URL not accessible:', imageUrl);
+              } else {
+                console.log('✅ Image URL is accessible!');
+                // Force a re-render by updating the state again
+                setGeneratedImages(prev => ({ ...prev }));
+              }
+            })
+            .catch(error => {
+              console.error('Image URL test error:', error);
+            });
+        }, 100);
+      } else {
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        alert(`Failed to regenerate image. Status: ${response.status}. Error: ${errorText}`);
+        setRegeneratingImageIndex(null);
+      }
+    } catch (error) {
+      clearTimeout(timeoutId); // Clear timeout on error
+      console.error('Failed to regenerate image:', error);
+      alert('Failed to regenerate image. Network error: ' + error.message);
+      setRegeneratingImageIndex(null);
+    }
+  };
+
+  // Batch PNG export
+  const handleExportPNGs = async () => {
+    try {
+      const slideElements = document.querySelectorAll('#slides-preview-container > div');
+      if (slideElements.length === 0) {
+        alert('No slides to export.');
+        return;
+      }
+      for (let i = 0; i < slideElements.length; i++) {
+        const slideElement = slideElements[i] as HTMLElement;
+        const dataUrl = await ScreenshotService.captureSlide(slideElement, outline[i]?.title || `Slide ${i+1}`);
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `${presentationTitle.replace(/[^a-zA-Z0-9]/g, '_')}_slide_${i+1}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      setExportModalOpen(false);
+    } catch (error) {
+      alert('Failed to export PNGs.');
+    }
+  };
+
+
+  const exportEditablePPTX = async (slides, title, theme) => {
+    try {
+      const pptx = new pptxgen();
+      pptx.author = 'NewGamma AI';
+      pptx.company = 'NewGamma';
+      pptx.title = title;
+      pptx.subject = 'AI Generated Presentation';
+      pptx.defineLayout({ name: '16x9', width: 13.33, height: 7.5 });
+      pptx.layout = '16x9';
+      pptx.defineSlideMaster({ title: 'MASTER_SLIDE', objects: ['title', 'body'] });
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+        const pptxSlide = pptx.addSlide({ masterName: 'MASTER_SLIDE' });
+        // Set background
+        let bgColor = theme?.colors?.background || '#FFFFFF';
+        pptxSlide.background = { color: bgColor.replace('#', '') };
+        let textColor = theme?.colors?.text || '#000000';
+        // Only map Tailwind classes, not already-mapped CSS gradients or colors
+        if (typeof theme.style?.background === 'string' && theme.style.background.startsWith('bg-gradient')) {
+          let mappedGradient = tailwindToCssGradient(theme.style.background);
+          if (mappedGradient && !mappedGradient.startsWith('bg-gradient') && mappedGradient.startsWith('linear-gradient')) {
+            theme.style.background = mappedGradient;
+          }
+        }
+        if (typeof theme.style?.background === 'string' && theme.style.background.startsWith('linear-gradient')) {
+          // Render gradient to canvas and use as image
+          const canvas = document.createElement('canvas');
+          canvas.width = 1920;
+          canvas.height = 1080;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Parse the gradient direction and stops
+            const gradMatch = theme.style.background.match(/linear-gradient\(([^,]+),(.+)\)/);
+            if (gradMatch) {
+              const direction = gradMatch[1].trim();
+              const stops = gradMatch[2].split(',').map(s => s.trim());
+              let gradient;
+              if (direction === 'to right' || direction === '90deg') {
+                gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+              } else if (direction === '135deg') {
+                gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+              } else {
+                gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+              }
+              stops.forEach((stop, i) => {
+                // Split color and position
+                const parts = stop.split(' ');
+                let color = parts[0];
+                let pos = parts[1] ? parseFloat(parts[1]) / 100 : i / (stops.length - 1);
+                // Only add valid hex or rgb(a) colors
+                if (/^#([0-9A-Fa-f]{3}){1,2}$/.test(color) || color.startsWith('rgb')) {
+                  gradient.addColorStop(isNaN(pos) ? i / (stops.length - 1) : pos, color);
+                }
+              });
+              ctx.fillStyle = gradient;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              pptxSlide.background = { path: canvas.toDataURL('image/png') };
+            } else {
+              pptxSlide.background = { color: bgColor.replace('#', '') };
+            }
+          } else {
+            pptxSlide.background = { color: bgColor.replace('#', '') };
+          }
+        } else if (typeof theme.style?.background === 'string' && (theme.style.background.startsWith('#') || /^[0-9A-Fa-f]{6}$/.test(theme.style.background))) {
+          pptxSlide.background = { color: theme.style.background.replace('#', '') };
+        } else {
+          pptxSlide.background = { color: bgColor.replace('#', '') };
+        }
+        // Enhanced text colors, fonts, sizes using improved utilities
+        const textColors = getContrastingTextColors(theme);
+        const fontFamily = getFontFamily(theme, 'heading');
+        const bodyFontFamily = getFontFamily(theme, 'body');
+        const fontSize = getFontSize(theme, 'heading');
+        const bodyFontSize = getFontSize(theme, 'body');
+        const textAlignment = getTextAlignment(theme);
+        const titleWeight = getFontWeight(theme, 'heading');
+        const bodyWeight = getFontWeight(theme, 'body');
+        // Layout logic
+        const layout = slide.layout || 'image-left';
+        let titleBox = { x: 7, y: 0.5, w: 5.5, h: 1 };
+        let bulletsBox = { x: 7, y: 2, w: 5.5, h: 5 };
+        let imageBox = { x: 0.5, y: 2, w: 5.5, h: 4 };
+        let showTitle = true, showBullets = true, showImage = !!(slide.image && slide.image.url);
+        let overlayText = false;
+        switch (layout) {
+          case 'image-left':
+            imageBox = { x: 0, y: 0, w: 6.5, h: 7.5 }; // Left half, full height
+            titleBox = { x: 7, y: 1, w: 5.5, h: 1.2 }; // Right half, top
+            bulletsBox = { x: 7, y: 2.5, w: 5.5, h: 4.5 }; // Right half, below title
+            break;
+          case 'image-right':
+            imageBox = { x: 6.83, y: 0, w: 6.5, h: 7.5 }; // Right half, full height
+            titleBox = { x: 1, y: 1, w: 5.5, h: 1.2 }; // Left half, top
+            bulletsBox = { x: 1, y: 2.5, w: 5.5, h: 4.5 }; // Left half, below title
+            break;
+          case 'image-top':
+            imageBox = { x: 0.5, y: 0.5, w: 12.33, h: 2.5 }; // Full width, matches preview
+            titleBox = { x: 1, y: 3.2, w: 11.33, h: 1 };
+            bulletsBox = { x: 1, y: 4.3, w: 11.33, h: 2.5 };
+            break;
+          case 'image-bottom':
+            titleBox = { x: 1, y: 0.5, w: 11.33, h: 1 };
+            bulletsBox = { x: 1, y: 1.7, w: 11.33, h: 2.5 };
+            imageBox = { x: 0.5, y: 4.5, w: 12.33, h: 2.5 }; // Full width, matches preview
+            break;
+          case 'full-image':
+            imageBox = { x: 0, y: 0, w: 13.33, h: 7.5 };
+            overlayText = true;
+            break;
+          case 'text-only':
+            showImage = false;
+            break;
+          case 'title-only':
+            showImage = false;
+            showBullets = false;
+            titleBox = { x: 0, y: 3, w: 13.33, h: 1.5 };
+            break;
+          case 'split':
+            titleBox = { x: 7, y: 0.5, w: 5.5, h: 1 };
+            bulletsBox = { x: 7, y: 2, w: 5.5, h: 5 };
+            imageBox = { x: 0.5, y: 1, w: 6, h: 5.5 };
+            break;
+        }
+        if (showTitle && slide.title && !overlayText) {
+          // Use HTML content if available, otherwise convert plain text
+          const titleText = slide.titleHtml ? convertHtmlToExportText(slide.titleHtml) : convertHtmlToExportText(slide.title);
+          pptxSlide.addText(titleText, {
+            ...titleBox,
+            fontSize: fontSize,
+            fontFace: fontFamily,
+            bold: titleWeight === 'bold',
+            color: normalizeColor(textColors.title),
+            align: textAlignment,
+            valign: 'top'
+          });
+        }
+        if (showBullets && slide.bullets && slide.bullets.length > 0 && !overlayText) {
+          const bulletTexts = slide.bullets.map((bullet, index) => {
+            // Use HTML content if available, otherwise convert plain text
+            const htmlBullet = slide.bulletsHtml && slide.bulletsHtml[index];
+            return htmlBullet ? convertHtmlToExportText(htmlBullet) : convertHtmlToExportText(bullet);
+          }).join('\n');
+          pptxSlide.addText(bulletTexts, {
+            ...bulletsBox,
+            fontSize: bodyFontSize,
+            fontFace: bodyFontFamily,
+            bold: bodyWeight === 'bold',
+            color: normalizeColor(textColors.text),
+            align: textAlignment,
+            valign: 'top',
+            bullet: true
+          });
+        }
+        if (overlayText) {
+          let overlayY = 1.5;
+          if (slide.title) {
+            const titleText = slide.titleHtml ? convertHtmlToExportText(slide.titleHtml) : convertHtmlToExportText(slide.title);
+            pptxSlide.addText(titleText, {
+              x: 0.5, y: overlayY, w: 12.33, h: 1.2,
+              fontSize: fontSize + 4,
+              fontFace: fontFamily,
+              bold: titleWeight === 'bold',
+              color: 'FFFFFF',
+              align: 'center',
+              valign: 'top'
+            });
+            overlayY += 1.3;
+          }
+          if (Array.isArray(slide.bullets) && slide.bullets.length > 0) {
+            const bulletTexts = slide.bullets.map((bullet, index) => {
+              const htmlBullet = slide.bulletsHtml && slide.bulletsHtml[index];
+              return htmlBullet ? convertHtmlToExportText(htmlBullet) : convertHtmlToExportText(bullet);
+            }).join('\n');
+            pptxSlide.addText(bulletTexts, {
+              x: 1, y: overlayY, w: 11.33, h: 3,
+              fontSize: bodyFontSize + 2,
+              fontFace: bodyFontFamily,
+              bold: bodyWeight === 'bold',
+              color: 'FFFFFF',
+              align: 'center',
+              valign: 'top',
+              bullet: true
+            });
+          }
+        }
+        if (showImage && slide.image && slide.image.url) {
+          try {
+            let imagePath = slide.image.url;
+            if (slide.image.url.includes('localhost:3002') || slide.image.url.startsWith('http')) {
+              try {
+                const response = await fetch(slide.image.url, { mode: 'cors', credentials: 'omit' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const blob = await response.blob();
+                const dataUrl = await new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result as string);
+                  reader.onerror = () => reject(new Error('Failed to read image data'));
+                  reader.readAsDataURL(blob);
+                });
+                pptxSlide.addImage({ data: dataUrl, ...imageBox });
+              } catch (fetchError) {
+                pptxSlide.addText('AI Generated Image', { ...imageBox, fontSize: 14, color: '#666666', align: 'center', valign: 'middle', fill: { color: '#F0F0F0' } });
+              }
+            } else {
+              pptxSlide.addImage({ path: imagePath, ...imageBox });
+            }
+          } catch (error) {
+            pptxSlide.addText('AI Generated Image', { ...imageBox, fontSize: 14, color: '#666666', align: 'center', valign: 'middle', fill: { color: '#F0F0F0' } });
+          }
+        }
+        if (slide.elements && slide.elements.length > 0) {
+          for (const el of slide.elements) {
+            try {
+              const response = await fetch(el.svg);
+              if (!response.ok) continue;
+              const svgText = await response.text();
+              const svgBase64 = btoa(unescape(encodeURIComponent(svgText)));
+              const dataUrl = `data:image/svg+xml;base64,${svgBase64}`;
+              const slideW = 13.33, slideH = 7.5;
+              const x = (el.x / 100) * slideW;
+              const y = (el.y / 100) * slideH;
+              const w = (el.w / 100) * slideW;
+              const h = (el.h / 100) * slideH;
+              pptxSlide.addImage({ data: dataUrl, x, y, w, h });
+            } catch (err) {
+              // skip
+            }
+          }
+        }
+      }
+      await pptx.writeFile({ fileName: `${title.replace(/[^a-zA-Z0-9]/g, '_')}_editable.pptx` });
+    } catch (error) {
+      alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const getThemeBackground = (theme) => {
+    if (!theme) return '#f8fafc';
+    if (theme.style?.background) return theme.style.background;
+    if (theme.backgroundGradient) return theme.backgroundGradient;
+    if (theme.colors?.background) return theme.colors.background;
+    return '#f8fafc';
+  };
+
+  // Utility: Map Tailwind gradient classes to real CSS gradients
+  const tailwindToCssGradient = (tw) => {
+    if (!tw) return null;
+    // Add mappings for your theme gradients here
+    if (tw === 'bg-gradient-to-r from-yellow-50 to-orange-500') {
+      return 'linear-gradient(to right, #fef3c7 0%, #fbbf24 100%)';
+    }
+    if (tw === 'bg-gradient-to-br from-amber-50 via-yellow-100 to-orange-200') {
+      return 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fdba74 100%)';
+    }
+    if (tw === 'bg-gradient-to-br from-pink-50 to-rose-100') {
+      return 'linear-gradient(135deg, #fdf2f8 0%, #ffe4e6 100%)';
+    }
+    if (tw === 'bg-gradient-to-br from-purple-50 to-violet-100') {
+      return 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)';
+    }
+    if (tw === 'bg-gradient-to-br from-green-50 to-emerald-100') {
+      return 'linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%)';
+    }
+    if (tw === 'bg-gradient-to-br from-amber-50 to-yellow-100') {
+      return 'linear-gradient(135deg, #fffbeb 0%, #fef9c3 100%)';
+    }
+    if (tw === 'bg-gradient-to-br from-slate-900 via-green-900 to-emerald-900') {
+      return 'linear-gradient(135deg, #0f172a 0%, #022c22 50%, #064e3b 100%)';
+    }
+    if (tw === 'bg-gradient-to-br from-black via-gray-900 to-blue-900') {
+      return 'linear-gradient(135deg, #000000 0%, #111827 50%, #1e3a8a 100%)';
+    }
+    // Add more as needed
+    return null;
+  };
+
+  // Helper to determine if a theme is dark
+  const isDarkTheme = (themeKey) => {
+    const darkThemes = [
+      'modern-dark',
+      'tech-futuristic',
+      'tech-cyber',
+      'elegant-purple',
+    ];
+    if (darkThemes.includes(themeKey)) return true;
+    const theme = THEME_PREVIEWS.find(t => t.key === themeKey);
+    if (!theme) return false;
+    const bg = theme.style?.background || '';
+    // Check for dark backgrounds
+    if (typeof bg === 'string' && (bg.startsWith('#0') || bg.startsWith('#1') || bg.startsWith('#4'))) return true;
+    if (typeof bg === 'string' && bg.includes('0a0a0a')) return true;
+    if (typeof bg === 'string' && bg.includes('1e293b')) return true;
+    if (typeof bg === 'string' && bg.includes('0f172a')) return true;
+    if (typeof bg === 'string' && bg.includes('4c1d95')) return true; // Elegant purple background
+    return false;
+  };
+
+  // Function to calculate optimal aspect ratio based on content size
+  const getOptimalAspectRatio = (title, bullets) => {
+    const titleLength = title?.length || 0;
+    const totalBulletLength = bullets?.reduce((sum, bullet) => sum + (bullet?.length || 0), 0) || 0;
+    const totalContentLength = titleLength + totalBulletLength;
+    const bulletCount = bullets?.length || 0;
+    
+    // Base ratio is 16:10 (1.6)
+    let aspectRatio = 1.6;
+    
+    // Adjust based on content length
+    if (totalContentLength > 500) {
+      aspectRatio = 1.8; // More vertical for lots of content
+    } else if (totalContentLength > 300) {
+      aspectRatio = 1.7;
+    } else if (totalContentLength > 150) {
+      aspectRatio = 1.65;
+    } else if (totalContentLength < 50) {
+      aspectRatio = 1.5; // More horizontal for minimal content
+    }
+    
+    // Adjust based on bullet count
+    if (bulletCount > 6) {
+      aspectRatio = Math.max(aspectRatio, 1.8);
+    } else if (bulletCount > 4) {
+      aspectRatio = Math.max(aspectRatio, 1.7);
+    }
+    
+    // Adjust based on title length
+    if (titleLength > 100) {
+      aspectRatio = Math.max(aspectRatio, 1.7);
+    }
+    
+    return aspectRatio;
+  };
+
+
+
+  // Function to convert HTML content to exportable text
+  const convertHtmlToExportText = (htmlContent) => {
+    if (!htmlContent || typeof htmlContent !== 'string') return htmlContent || '';
+    
+    // Create a temporary div to parse HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    // Convert HTML to plain text while preserving basic structure
+    let text = tempDiv.textContent || tempDiv.innerText || '';
+    
+    // Clean up extra whitespace
+    text = text.replace(/\s+/g, ' ').trim();
+    
+    return text;
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: `url(${pastelBg}) center center / cover no-repeat fixed`,
+      }}
+      className="w-full min-h-screen flex flex-col"
+    >
+      {/* Stepper at the top (hide in preview/customize step) */}
+      {currentStep !== 3 && (
+        <Stepper
+          steps={STEPS}
+          currentStep={currentStep}
+          onStepClick={handleStepClick}
+          allowNavigation={true}
+        />
+      )}
+
+
+
+      {/* Step content */}
+      <div className="w-full max-w-7xl mx-auto px-4">
+        {currentStep === 3 && (
+          <div className="min-h-screen flex flex-col">
+            <Navbar documentTitle="The Extraordinary World of Neurons: Building..." />
+            <div className="flex-1 flex">
+              {/* Left sidebar - Slide outline */}
+              <div className="w-80 bg-white border-r border-gray-200 p-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Slide Outline</h3>
+                <SlideList
+                  slides={outline}
+                  selectedSlideId={selectedSlideId}
+                  onSelectSlide={handleSelectSlide}
+                  generatedImages={generatedImages}
+                  onRegenerateImage={handleRegenerateImageWithPrompt}
+                  regeneratingImageIndex={regeneratingImageIndex}
+                />
+              </div>
+
+              {/* Main content area */}
+              <div className="flex-1 bg-gray-50 p-6">
+                <div className="max-w-4xl mx-auto">
+                  {/* Gamma-style slide preview container */}
+                  <div
+                  className="w-full max-w-7xl rounded shadow-2xl overflow-hidden"
+                    style={{
+                    background: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.background || 
+                               THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.backgroundGradient || 
+                               THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.colors?.background || '#fff',
+                      fontFamily: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.fontFamily || 'inherit',
+                      aspectRatio: '16/9',
+                      width: '100%',
+                      maxWidth: '1920px',
+                    }}
+                  >
+                    {(() => {
+                    const slideIndex = parseInt(selectedSlideId?.toString() || '0');
+                    
+                    // Ensure the outline array has enough elements
+                    if (slideIndex >= outline.length) {
+                      // Add missing slides to the outline
+                      const newOutline = [...outline];
+                      const slidesAdded = [];
+                      while (newOutline.length <= slideIndex) {
+                        newOutline.push({ title: '', bullets: [''] });
+                        slidesAdded.push(newOutline.length - 1);
+                      }
+                      setOutline(newOutline);
+                      
+                      // Generate images for newly added slides if image source is not 'None'
+                      if (imageSource !== 'None' && slidesAdded.length > 0) {
+                        // Trigger image generation for new slides
+                        setTimeout(() => {
+                          generateImagesForSlides();
+                        }, 100);
+                      }
+                    }
+                    
+                    const layout = outline[slideIndex]?.layout || 'image-left';
+                    const img = generatedImages[slideIndex.toString()];
+                    const title = outline[slideIndex]?.title || '';
+                    const bullets = outline[slideIndex]?.bullets || [];
+                    
+                    // Calculate optimal aspect ratio based on content
+                    const optimalAspectRatio = getOptimalAspectRatio(title, bullets);
+                    
+                    // Debug image display
+                    console.log('Slide', slideIndex, 'image:', img);
+                    console.log('All generatedImages:', generatedImages);
+                    console.log('Content length:', title?.length + (bullets?.reduce((sum, bullet) => sum + (bullet?.length || 0), 0) || 0));
+                    console.log('Optimal aspect ratio:', optimalAspectRatio);
+                      // Layouts
+                      if (layout === 'image-left') {
+                        return (
+                        <div className="flex h-full">
+                          <div className="w-2/5 h-full flex items-center justify-center relative">
+                              {img ? (
+                                <>
+                                  <img src={img} alt={title} className="w-full h-full object-cover" />
+                                  <button
+                                    className="absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+                                    title="Regenerate image"
+                                    onClick={() => handleRegenerateImageWithPrompt(slideIndex)}
+                                  >
+                                    {regeneratingImageIndex === slideIndex ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      '🖼️'
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg">Image Not Found</div>
+                              )}
+                            </div>
+                          <div className="w-3/5 h-full p-6 flex flex-col justify-center">
+                            <h2 className={`text-2xl font-bold mb-4 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                              <SlideTiptapEditor
+                                content={title}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline]; 
+                                  newOutline[slideIndex].title = newContent; 
+                                  // Store HTML content for export
+                                  if (htmlContent) {
+                                    newOutline[slideIndex].titleHtml = htmlContent;
+                                  }
+                                  setOutline(newOutline);
+                                }}
+                                placeholder="Slide title"
+                                isTitle={true}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            </h2>
+                            <div className="mt-4 flex flex-col gap-3 overflow-y-auto flex-1">
+                                {bullets.map((bullet, bulletIdx) => (
+                                <SlideTiptapEditor
+                                  key={bulletIdx}
+                                  content={bullet || ''}
+                                  onChange={(newContent, htmlContent) => {
+                                    const newOutline = [...outline];
+                                    if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                      newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                      // Store HTML content for export
+                                      if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      } else if (htmlContent) {
+                                        newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      }
+                                      setOutline(newOutline);
+                                    }
+                                  }}
+                                  placeholder={`Bullet ${bulletIdx + 1}`}
+                                  isTitle={false}
+                                  isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                  className="w-full"
+                                />
+                              ))}
+                              <button className="mt-2 text-gamma-blue hover:text-blue-700 text-sm font-medium self-start" onClick={() => { 
+                                const newOutline = [...outline];
+                                if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                  // Add a clean empty bullet
+                                  newOutline[slideIndex].bullets.push('');
+                                  // Also initialize the HTML array if it doesn't exist
+                                  if (!newOutline[slideIndex].bulletsHtml) {
+                                    newOutline[slideIndex].bulletsHtml = [];
+                                  }
+                                  newOutline[slideIndex].bulletsHtml.push('');
+                                  setOutline(newOutline);
+                                }
+                              }}>+ Add bullet point</button>
+                              </div>
+                            </div>
+                        </div>
+                        );
+                      } else if (layout === 'image-right') {
+                        return (
+                        <div className="flex h-full">
+                          <div className="w-3/5 h-full p-8 flex flex-col justify-start">
+                            <h2 className={`text-2xl font-bold mb-4 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                              <SlideTiptapEditor
+                                content={title}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline]; 
+                                  newOutline[slideIndex].title = newContent; 
+                                  // Store HTML content for export
+                                  if (htmlContent) {
+                                    newOutline[slideIndex].titleHtml = htmlContent;
+                                  }
+                                  setOutline(newOutline);
+                                }}
+                                placeholder="Slide title"
+                                isTitle={true}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            </h2>
+                            <div className="mt-6 flex flex-col gap-4">
+                                {bullets.map((bullet, bulletIdx) => (
+                                <SlideTiptapEditor
+                                  key={bulletIdx}
+                                  content={bullet || ''}
+                                  onChange={(newContent, htmlContent) => {
+                                    const newOutline = [...outline];
+                                    if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                      newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                      // Store HTML content for export
+                                      if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      } else if (htmlContent) {
+                                        newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      }
+                                      setOutline(newOutline);
+                                    }
+                                  }}
+                                  placeholder={`Bullet ${bulletIdx + 1}`}
+                                  isTitle={false}
+                                  isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                  className="w-full"
+                                />
+                              ))}
+                              <button className="mt-4 text-gamma-blue hover:text-blue-700 text-sm font-medium self-start" onClick={() => { 
+                                const newOutline = [...outline];
+                                if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                  // Add a clean empty bullet
+                                  newOutline[slideIndex].bullets.push('');
+                                  // Also initialize the HTML array if it doesn't exist
+                                  if (!newOutline[slideIndex].bulletsHtml) {
+                                    newOutline[slideIndex].bulletsHtml = [];
+                                  }
+                                  newOutline[slideIndex].bulletsHtml.push('');
+                                  setOutline(newOutline);
+                                }
+                              }}>+ Add bullet point</button>
+                            </div>
+                          </div>
+                          <div className="w-2/5 h-full flex items-center justify-center relative">
+                              {img ? (
+                                <>
+                                  <img src={img} alt={title} className="w-full h-full object-cover" />
+                                  <button
+                                    className="absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+                                    title="Regenerate image"
+                                    onClick={() => handleRegenerateImageWithPrompt(slideIndex)}
+                                  >
+                                    {regeneratingImageIndex === slideIndex ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      '🖼️'
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg">Image Not Found</div>
+                              )}
+                            </div>
+                        </div>
+                        );
+                      } else if (layout === 'image-top') {
+                        return (
+                        <div className="flex flex-col h-full">
+                          <div className="h-2/5 w-full flex items-center justify-center relative">
+                              {img ? (
+                                <>
+                                  <img src={img} alt={title} className="w-full h-full object-cover" />
+                                  <button
+                                    className="absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+                                    title="Regenerate image"
+                                    onClick={() => handleRegenerateImageWithPrompt(slideIndex)}
+                                  >
+                                    {regeneratingImageIndex === slideIndex ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      '🖼️'
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg">Image Not Found</div>
+                              )}
+                            </div>
+                          <div className="h-3/5 w-full p-6 flex flex-col justify-center">
+                            <h2 className={`text-xl font-bold mb-3 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                              <SlideTiptapEditor
+                                content={title}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline]; 
+                                  newOutline[slideIndex].title = newContent; 
+                                  // Store HTML content for export
+                                  if (htmlContent) {
+                                    newOutline[slideIndex].titleHtml = htmlContent;
+                                  }
+                                  setOutline(newOutline);
+                                }}
+                                placeholder="Slide title"
+                                isTitle={true}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            </h2>
+                            <div className="flex flex-col gap-2 overflow-y-auto flex-1">
+                                {bullets.map((bullet, bulletIdx) => (
+                                <SlideTiptapEditor
+                                  key={bulletIdx}
+                                  content={bullet || ''}
+                                  onChange={(newContent, htmlContent) => {
+                                    const newOutline = [...outline];
+                                    if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                      newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                      // Store HTML content for export
+                                      if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      } else if (htmlContent) {
+                                        newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      }
+                                      setOutline(newOutline);
+                                    }
+                                  }}
+                                  placeholder={`Bullet ${bulletIdx + 1}`}
+                                  isTitle={false}
+                                  isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                  className="w-full"
+                                />
+                              ))}
+                              <button className="mt-2 text-gamma-blue hover:text-blue-700 text-xs font-medium self-start" onClick={() => { 
+                                const newOutline = [...outline];
+                                if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                  // Add a clean empty bullet
+                                  newOutline[slideIndex].bullets.push('');
+                                  // Also initialize the HTML array if it doesn't exist
+                                  if (!newOutline[slideIndex].bulletsHtml) {
+                                    newOutline[slideIndex].bulletsHtml = [];
+                                  }
+                                  newOutline[slideIndex].bulletsHtml.push('');
+                                  setOutline(newOutline);
+                                }
+                              }}>+ Add bullet point</button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (layout === 'image-bottom') {
+                        return (
+                        <div className="flex flex-col h-full">
+                          <div className="h-3/5 w-full p-6 flex flex-col justify-center">
+                            <h2 className={`text-xl font-bold mb-3 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                              <SlideTiptapEditor
+                                content={title}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline]; 
+                                  newOutline[slideIndex].title = newContent; 
+                                  // Store HTML content for export
+                                  if (htmlContent) {
+                                    newOutline[slideIndex].titleHtml = htmlContent;
+                                  }
+                                  setOutline(newOutline);
+                                }}
+                                placeholder="Slide title"
+                                isTitle={true}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            </h2>
+                            <div className="flex flex-col gap-2 overflow-y-auto flex-1">
+                                {bullets.map((bullet, bulletIdx) => (
+                                <SlideTiptapEditor
+                                  key={bulletIdx}
+                                  content={bullet || ''}
+                                  onChange={(newContent, htmlContent) => {
+                                    const newOutline = [...outline];
+                                    if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                      newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                      // Store HTML content for export
+                                      if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      } else if (htmlContent) {
+                                        newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      }
+                                      setOutline(newOutline);
+                                    }
+                                  }}
+                                  placeholder={`Bullet ${bulletIdx + 1}`}
+                                  isTitle={false}
+                                  isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                  className="w-full"
+                                />
+                              ))}
+                              <button className="mt-2 text-gamma-blue hover:text-blue-700 text-xs font-medium self-start" onClick={() => { 
+                                const newOutline = [...outline];
+                                if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                  // Add a clean empty bullet
+                                  newOutline[slideIndex].bullets.push('');
+                                  // Also initialize the HTML array if it doesn't exist
+                                  if (!newOutline[slideIndex].bulletsHtml) {
+                                    newOutline[slideIndex].bulletsHtml = [];
+                                  }
+                                  newOutline[slideIndex].bulletsHtml.push('');
+                                  setOutline(newOutline);
+                                }
+                              }}>+ Add bullet point</button>
+                              </div>
+                            </div>
+                          <div className="h-2/5 w-full flex items-center justify-center relative">
+                              {img ? (
+                                <>
+                                  <img src={img} alt={title} className="w-full h-full object-cover" />
+                                  <button
+                                    className="absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+                                    title="Regenerate image"
+                                    onClick={() => handleRegenerateImageWithPrompt(slideIndex)}
+                                  >
+                                    {regeneratingImageIndex === slideIndex ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      '🖼️'
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg">Image Not Found</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      } else if (layout === 'text-only') {
+                        return (
+                        <div className="h-full p-8 flex flex-col justify-center">
+                          <h2 className={`text-3xl font-bold mb-6 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                            <SlideTiptapEditor
+                              content={title}
+                              onChange={(newContent, htmlContent) => {
+                                const newOutline = [...outline]; 
+                                newOutline[slideIndex].title = newContent; 
+                                // Store HTML content for export
+                                if (htmlContent) {
+                                  newOutline[slideIndex].titleHtml = htmlContent;
+                                }
+                                setOutline(newOutline);
+                              }}
+                              placeholder="Slide title"
+                              isTitle={true}
+                              isDarkTheme={isDarkTheme(selectedThemeKey)}
+                              className="w-full"
+                            />
+                          </h2>
+                          <div className="mt-4 flex flex-col gap-3 overflow-y-auto flex-1">
+                                {bullets.map((bullet, bulletIdx) => (
+                              <SlideTiptapEditor
+                                key={bulletIdx}
+                                content={bullet || ''}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline];
+                                  if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                    newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                    // Store HTML content for export
+                                    if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                      newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                    } else if (htmlContent) {
+                                      newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                      newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                    }
+                                    setOutline(newOutline);
+                                  }
+                                }}
+                                placeholder={`Bullet ${bulletIdx + 1}`}
+                                isTitle={false}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            ))}
+                            <button className="mt-2 text-gamma-blue hover:text-blue-700 text-sm font-medium self-start" onClick={() => { 
+                              const newOutline = [...outline];
+                              if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                // Add a clean empty bullet
+                                newOutline[slideIndex].bullets.push('');
+                                // Also initialize the HTML array if it doesn't exist
+                                if (!newOutline[slideIndex].bulletsHtml) {
+                                  newOutline[slideIndex].bulletsHtml = [];
+                                }
+                                newOutline[slideIndex].bulletsHtml.push('');
+                                setOutline(newOutline);
+                              }
+                            }}>+ Add bullet point</button>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                      // Default fallback
+                        return (
+                        <div className="h-full p-8 flex flex-col justify-center">
+                          <h2 className={`text-3xl font-bold mb-6 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                            <SlideTiptapEditor
+                              content={title}
+                              onChange={(newContent, htmlContent) => {
+                                const newOutline = [...outline]; 
+                                newOutline[slideIndex].title = newContent; 
+                                // Store HTML content for export
+                                if (htmlContent) {
+                                  newOutline[slideIndex].titleHtml = htmlContent;
+                                }
+                                setOutline(newOutline);
+                              }}
+                              placeholder="Slide title"
+                              isTitle={true}
+                              isDarkTheme={isDarkTheme(selectedThemeKey)}
+                              className="w-full"
+                            />
+                          </h2>
+                          <div className="mt-4 flex flex-col gap-2 overflow-y-auto">
+                                {bullets.map((bullet, bulletIdx) => (
+                              <SlideTiptapEditor
+                                key={bulletIdx}
+                                content={bullet || ''}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline];
+                                  if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                    newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                    // Store HTML content for export
+                                    if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                      newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                    } else if (htmlContent) {
+                                      newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                      newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                    }
+                                    setOutline(newOutline);
+                                  }
+                                }}
+                                placeholder={`Bullet ${bulletIdx + 1}`}
+                                isTitle={false}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            ))}
+                            <button className="mt-2 text-gamma-blue hover:text-blue-700 text-sm font-medium self-start" onClick={() => { 
+                              const newOutline = [...outline];
+                              if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                // Add a clean empty bullet
+                                newOutline[slideIndex].bullets.push('');
+                                // Also initialize the HTML array if it doesn't exist
+                                if (!newOutline[slideIndex].bulletsHtml) {
+                                  newOutline[slideIndex].bulletsHtml = [];
+                                }
+                                newOutline[slideIndex].bulletsHtml.push('');
+                                setOutline(newOutline);
+                              }
+                            }}>+ Add bullet point</button>
+                              </div>
+                            </div>
+                        );
+                      }
+                    })()}
+                </div>
+                {/* Navigation controls */}
+                <div className="flex items-center justify-center gap-4 mt-8">
+                  <button className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onClick={() => setSelectedSlideId(Math.max(0, (selectedSlideId ?? 0) - 1))} disabled={(selectedSlideId ?? 0) === 0}>Previous</button>
+                  
+                  {/* Enhanced Layout options for the current slide */}
+                  <div className="flex gap-2">
+                    <button
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        outline[parseInt(selectedSlideId?.toString() || '0')]?.layout === 'image-left'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      onClick={() => {
+                        const newOutline = [...outline];
+                        newOutline[parseInt(selectedSlideId?.toString() || '0')].layout = 'image-left';
+                        setOutline(newOutline);
+                      }}
+                    >
+                      Image Left
+                    </button>
+                    <button
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        outline[parseInt(selectedSlideId?.toString() || '0')]?.layout === 'image-right'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      onClick={() => {
+                        const newOutline = [...outline];
+                        newOutline[parseInt(selectedSlideId?.toString() || '0')].layout = 'image-right';
+                        setOutline(newOutline);
+                      }}
+                    >
+                      Image Right
+                    </button>
+                    <button
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        outline[parseInt(selectedSlideId?.toString() || '0')]?.layout === 'image-top'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      onClick={() => {
+                        const newOutline = [...outline];
+                        newOutline[parseInt(selectedSlideId?.toString() || '0')].layout = 'image-top';
+                        setOutline(newOutline);
+                      }}
+                    >
+                      Image Top
+                    </button>
+                    <button
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        outline[parseInt(selectedSlideId?.toString() || '0')]?.layout === 'image-bottom'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      onClick={() => {
+                        const newOutline = [...outline];
+                        newOutline[parseInt(selectedSlideId?.toString() || '0')].layout = 'image-bottom';
+                        setOutline(newOutline);
+                      }}
+                    >
+                      Image Bottom
+                    </button>
+                    <button
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        outline[parseInt(selectedSlideId?.toString() || '0')]?.layout === 'text-only'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      onClick={() => {
+                        const newOutline = [...outline];
+                        newOutline[parseInt(selectedSlideId?.toString() || '0')].layout = 'text-only';
+                        setOutline(newOutline);
+                      }}
+                    >
+                      Text Only
+                    </button>
+                  </div>
+                  
+                  <span className="text-sm text-gray-600">Slide {(selectedSlideId ?? 0) + 1} of {outline.length}</span>
+                  <button className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onClick={() => setSelectedSlideId(Math.min(outline.length - 1, (selectedSlideId ?? 0) + 1))} disabled={(selectedSlideId ?? 0) === outline.length - 1}>Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {currentStep === 0 && (
+          <div className="fixed inset-0 w-screen h-screen flex items-center justify-center overflow-hidden">
+            {/* Background decorative elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-300/20 rounded-full blur-3xl"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-300/10 rounded-full blur-3xl"></div>
+            </div>
+            
+            <div className="flex flex-col items-center justify-center w-full relative z-10 px-6">
+              {/* Main content */}
+              <div className="text-center max-w-4xl mx-auto">
+                {/* Badge */}
+                <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-gray-800 text-sm font-medium mb-8 border border-white/30">
+                  <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                  AI-Powered Presentation Tool
+                </div>
+                
+                {/* Main heading */}
+                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-800 text-center mb-8 leading-tight tracking-tight">
+                  Transform Ideas Into
+                  <br />
+                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    Stunning Slides
+                  </span>
+                </h1>
+                
+                {/* Subheading */}
+                <p className="text-xl md:text-2xl text-gray-700 text-center mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
+                  Create professional presentations in seconds with AI. From concept to slides, 
+                  <span className="font-semibold text-gray-800"> everything you need in one place.</span>
+                </p>
+                
+                {/* Input section */}
+                <div className="relative w-full max-w-2xl mx-auto mb-12">
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      className="w-full rounded-2xl px-8 py-6 text-xl border-2 border-white/30 bg-white/20 backdrop-blur-sm focus:ring-4 focus:ring-white/30 focus:border-white/50 outline-none text-gray-800 placeholder-gray-600 transition-all duration-150 shadow-2xl"
+                      placeholder="What's your presentation about?"
+                      value={generateInput}
+                      onChange={e => setGenerateInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleGenerateSlides(generateInput); }}
+                      style={{
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2)'
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                  <button
+                    className="group relative px-8 py-5 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold text-lg transition-all duration-150 transform hover:scale-105 hover:shadow-2xl"
+                    onClick={() => setCurrentStep(1)}
+                    style={{
+                      boxShadow: '0 10px 30px rgba(139, 92, 246, 0.3)'
+                    }}
+                  >
+                    <span className="relative z-10 flex items-center justify-center w-full">
+                      <span className="mr-3 text-2xl">📄</span>
+                      ✨ Generate
+                    </span>
+                  </button>
+                </div>
+                
+                {/* Stats */}
+                <div className="flex justify-center items-center gap-8 mt-16 text-gray-700 text-sm font-medium">
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-2">⚡</span>
+                    <span>Generate in seconds</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-2">🎨</span>
+                    <span>Beautiful templates</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-2">🔒</span>
+                    <span>100% private</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {currentStep === 1 && (
+          <div className="py-12 flex flex-col items-center w-full">
+            <h1 className="text-3xl font-bold mb-8">Generate</h1>
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center">
+              {/* Prompt input for topic */}
+              <input
+                type="text"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg mb-6 focus:outline-none focus:ring-2 focus:ring-gamma-blue"
+                placeholder="Describe what you'd like to make"
+                value={generateInput}
+                onChange={e => setGenerateInput(e.target.value)}
+              />
+              {/* Amount of text selector */}
+              <div className="w-full mb-6">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Amount of text</label>
+                <div className="flex gap-2 mt-1">
+                  {['Minimal', 'Concise', 'Detailed', 'Extensive'].map(opt => (
+                    <label key={opt} className="flex items-center gap-1 cursor-pointer">
+                      <input type="radio" name="content-style" className="accent-gamma-blue" checked={amountOfText === opt} onChange={() => setAmountOfText(opt)} /> <span>{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Number of slides selector */}
+              <div className="w-full mb-6">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Number of slides (max 10)</label>
+                <div className="flex items-center gap-4 mt-1">
+                  <input
+                    type="range"
+                    min="3"
+                    max="10"
+                    value={slideCount}
+                    onChange={(e) => setSlideCount(parseInt(e.target.value))}
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <span className="text-lg font-semibold text-gray-700 min-w-[2rem] text-center">{slideCount}</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>3</span>
+                  <span>10</span>
+                </div>
+              </div>
+              {/* Example prompts grid */}
+              <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <button className="bg-blue-50 rounded-lg px-4 py-3 text-left hover:bg-blue-100 transition" onClick={() => setGenerateInput('What are Neurons?')}>What are Neurons?</button>
+                <button className="bg-blue-50 rounded-lg px-4 py-3 text-left hover:bg-blue-100 transition" onClick={() => setGenerateInput('Parts of the Neuron')}>Parts of the Neuron</button>
+                <button className="bg-blue-50 rounded-lg px-4 py-3 text-left hover:bg-blue-100 transition" onClick={() => setGenerateInput('How do neurons communicate?')}>How do neurons communicate?</button>
+                <button className="bg-blue-50 rounded-lg px-4 py-3 text-left hover:bg-blue-100 transition" onClick={() => setGenerateInput('Neurons in the brain')}>Neurons in the brain</button>
+              </div>
+              <button className="mt-2 px-6 py-2 bg-gamma-blue text-white rounded-lg font-semibold w-full" onClick={handleNextFromGenerate} disabled={!generateInput.trim() || isGenerating}>
+                {isGenerating ? 'Generating...' : 'Next: Outline'}
+              </button>
+            </div>
+          </div>
+        )}
+        {currentStep === 2 && (
+          <div className="py-12 flex flex-col items-center w-full">
+            <h1 className="text-3xl font-bold mb-8">Outline</h1>
+            <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center">
+              {/* Editable prompt/title */}
+              <input
+                type="text"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-xl font-semibold mb-8 focus:outline-none focus:ring-2 focus:ring-gamma-blue text-center"
+                value={finalTitle}
+                onChange={e => setFinalTitle(e.target.value)}
+                placeholder="Enter your presentation topic or prompt"
+              />
+              {/* Numbered editable cards */}
+              <div className="w-full mb-8">
+                {isGenerating && outline.length === 0 ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gamma-blue"></div>
+                      <span className="text-gray-600">Generating outline...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {outline.map((section, idx) => (
+                      <div key={idx} className="flex items-start mb-4 bg-gray-50 rounded-lg p-4 shadow-sm">
+                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gamma-blue text-white font-bold text-lg mr-4 mt-1">{idx+1}</div>
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            className="w-full font-semibold text-lg mb-2 bg-transparent border-b border-gray-200 focus:border-gamma-blue focus:outline-none"
+                            value={section.title}
+                            onChange={e => {
+                              const newOutline = [...outline];
+                              newOutline[idx].title = e.target.value;
+                              setOutline(newOutline);
+                            }}
+                          />
+                          {/* Directly editable bullet points */}
+                          <div className="ml-2 mt-1 text-gray-700 text-base">
+                            {section.bullets && section.bullets.map((bullet, bulletIdx) => {
+                              const bulletKey = `${idx}-${bulletIdx}`;
+                              const isCurrentlyTyping = isTyping && idx === typingProgress.sectionIndex && bulletIdx === typingProgress.bulletIndex;
+                              const hasBeenTyped = typingBullets[bulletKey] === bullet;
+                              const displayText = isCurrentlyTyping ? (typingBullets[bulletKey] || '') : (hasBeenTyped ? bullet : '');
+                              
+                              return (
+                                <div key={bulletIdx} className="flex items-start mb-1">
+                                  <span className="text-gray-400 mr-2 mt-1">•</span>
+                                  {isCurrentlyTyping ? (
+                                    <TypingAnimation
+                                      text={bullet}
+                                      speed={15}
+                                      className="flex-1 bg-transparent border-b border-gray-100 focus:border-gamma-blue focus:outline-none"
+                                      onComplete={() => {
+                                        // Update the typing bullets with the full text
+                                        setTypingBullets(prev => ({
+                                          ...prev,
+                                          [bulletKey]: bullet
+                                        }));
+                                        
+                                        if (bulletIdx < section.bullets.length - 1) {
+                                          setTypingProgress({ sectionIndex: idx, bulletIndex: bulletIdx + 1 });
+                                        } else if (idx < outline.length - 1) {
+                                          setTypingProgress({ sectionIndex: idx + 1, bulletIndex: 0 });
+                                        } else {
+                                          setIsTyping(false);
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="flex-1 flex items-center">
+                                      <input
+                                        type="text"
+                                        className="flex-1 bg-transparent border-b border-gray-100 focus:border-gamma-blue focus:outline-none"
+                                        value={displayText}
+                                        onChange={e => {
+                                          const newOutline = [...outline];
+                                          newOutline[idx].bullets[bulletIdx] = e.target.value;
+                                          setOutline(newOutline);
+                                        }}
+                                        placeholder="Enter bullet point..."
+                                      />
+                                      {section.bullets.length > 1 && (
+                                        <button
+                                          className="ml-2 text-gray-300 hover:text-red-500 text-sm"
+                                          onClick={() => {
+                                            const newOutline = [...outline];
+                                            newOutline[idx].bullets.splice(bulletIdx, 1);
+                                            setOutline(newOutline);
+                                          }}
+                                          title="Remove bullet"
+                                        >
+                                          ×
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {/* Add new bullet button */}
+                            <button
+                              className="text-gray-400 hover:text-gamma-blue text-sm mt-1 ml-6"
+                              onClick={() => {
+                                const newOutline = [...outline];
+                                newOutline[idx].bullets.push('');
+                                setOutline(newOutline);
+                              }}
+                            >
+                              + Add bullet
+                            </button>
+                          </div>
+                        </div>
+                        <div className="ml-4 mt-2 flex flex-col gap-2">
+                          <button 
+                            className="text-gray-400 hover:text-red-500" 
+                            title="Remove card" 
+                            onClick={() => {
+                              const newOutline = outline.filter((_, i) => i !== idx);
+                              setOutline(newOutline);
+                            }}
+                          >
+                            ×
+                          </button>
+                          <button 
+                            className={`text-sm transition-colors ${
+                              regeneratingImageIndex === idx 
+                                ? 'text-blue-500' 
+                                : 'text-gray-400 hover:text-blue-500'
+                            }`}
+                            title="Regenerate image" 
+                            onClick={() => handleRegenerateImageWithPrompt(idx)}
+                            disabled={regeneratingImageIndex === idx}
+                          >
+                            {regeneratingImageIndex === idx ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                            ) : (
+                              '🖼️'
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <button className="w-full mt-2 py-2 bg-blue-50 hover:bg-blue-100 text-gamma-blue rounded-lg font-semibold flex items-center justify-center gap-2" onClick={() => {
+                      const newOutline = [...outline, { title: '', bullets: [''] }];
+                      setOutline(newOutline);
+                      
+                      // Generate image for the newly added slide if image source is not 'None'
+                      if (imageSource !== 'None') {
+                        setTimeout(() => {
+                          generateImagesForSlides();
+                        }, 100);
+                      }
+                    }}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      Add card
+                    </button>
+                  </>
+                )}
+              </div>
+              {/* Customize section */}
+              <div className="w-full bg-gray-50 rounded-xl p-6 mb-6">
+                <h2 className="text-lg font-bold mb-4">Customize your presentation</h2>
+                {/* Theme preview grid */}
+                <div className="mb-6">
+                  <label className="block text-xs font-semibold text-gray-500 mb-2">Themes</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {THEME_PREVIEWS.map(theme => (
+                      <button
+                        key={theme.key}
+                        className={`rounded-xl p-4 shadow flex flex-col items-start border-4 transition-all duration-150 focus:outline-none ${selectedThemeKey === theme.key ? theme.border + ' ring-2 ring-gamma-blue' : 'border-transparent'}`}
+                        style={theme.style}
+                        onClick={() => setSelectedThemeKey(theme.key)}
+                        type="button"
+                        tabIndex={0}
+                        aria-pressed={selectedThemeKey === theme.key}
+                      >
+                        <span className={`${theme.titleClass} ${theme.key === 'mocha' ? ' text-[#e7d7c1]' : ''}`}>Title</span>
+                        <span className={`${theme.bodyClass} ${theme.key === 'mocha' ? ' text-[#e7d7c1]' : ''}`}>Body & <a href="#" className="underline">link</a></span>
+                        <span className="text-xs text-gray-400 mt-2">{theme.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Content style radio buttons removed from here */}
+                <div className="flex flex-wrap gap-6">
+                  {/* Image source dropdown */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Image source</label>
+                    <select className="rounded-lg border-gray-300 px-3 py-2 text-base" value={imageSource} onChange={e => setImageSource(e.target.value)}>
+                      <option>AI images</option>
+                      <option>Unsplash</option>
+                      <option>None</option>
+                    </select>
+                  </div>
+                  {/* Image style input */}
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Image style</label>
+                    <input type="text" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base" placeholder="Optional: describe the colors, style, or mood to use" value={imageStyle} onChange={e => setImageStyle(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+              <button 
+                className={`mt-2 px-6 py-2 rounded-lg font-semibold w-full transition-all duration-200 ${
+                  isGenerating || isTyping || isGeneratingImages || regeneratingImageIndex !== null || !isAllContentReady()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gamma-blue text-white hover:bg-blue-700'
+                }`} 
+                onClick={() => setCurrentStep(3)}
+                disabled={isGenerating || isTyping || isGeneratingImages || regeneratingImageIndex !== null || !isAllContentReady()}
+              >
+                {isGenerating ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Generating Content...
+                  </span>
+                ) : isTyping ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Typing Content...
+                  </span>
+                ) : isGeneratingImages ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Generating Images...
+                  </span>
+                ) : regeneratingImageIndex !== null ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Generating Image...
+                  </span>
+                ) : !isAllContentReady() ? (
+                  <span className="flex items-center justify-center">
+                    <span className="text-yellow-200 mr-2">⏳</span>
+                    Waiting for Content...
+                  </span>
+                ) : (
+                  'Generate'
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+        {currentStep === 3 && (
+          <div className="flex flex-col gap-4 py-12 items-center">
+            {/* Top-right action bar */}
+            <div className="flex justify-end items-center w-full mb-6 pr-2">
+              {/* Theme Dropdown */}
+              <div className="relative" ref={themeDropdownRef}>
+                <button className="flex items-center gap-1 text-gamma-blue font-semibold text-base px-3 py-1 rounded hover:bg-blue-50 transition" onClick={() => setThemeDropdownOpen(v => !v)}>
+                  <span role="img" aria-label="Theme">🎨</span> Theme
+                </button>
+                {themeDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    {THEME_PREVIEWS.map(theme => (
+                      <button
+                        key={theme.key}
+                        className={`w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center gap-2 ${selectedThemeKey === theme.key ? 'bg-blue-100 font-bold' : ''}`}
+                        style={theme.style}
+                        onClick={() => { setSelectedThemeKey(theme.key); setThemeDropdownOpen(false); }}
+                      >
+                        <span className="w-4 h-4 rounded-full border mr-2" style={{ background: theme.style.background || theme.style.backgroundColor, borderColor: theme.style.borderColor }}></span>
+                        {theme.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Share button (unchanged) */}
+              <button className="flex items-center gap-1 text-gamma-blue font-semibold text-base px-3 py-1 rounded hover:bg-blue-50 transition ml-2">
+                <span role="img" aria-label="Share">🔗</span> Share
+              </button>
+              {/* Present button (unchanged) */}
+              <button className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-base px-5 py-2 rounded-full ml-4 shadow transition">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><polygon points="5,3 19,10 5,17 5,3" /></svg>
+                Present
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {/* Menu Dropdown */}
+              <div className="relative" ref={menuDropdownRef}>
+                <button className="ml-4 text-gray-500 hover:text-gray-700 text-2xl" onClick={() => setMenuDropdownOpen(v => !v)}>&#8230;</button>
+                {menuDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <button
+                      className="w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center gap-2"
+                      onClick={() => { setMenuDropdownOpen(false); setExportModalOpen(true); }}
+                    >
+                      <span role="img" aria-label="Export">📤</span> Export
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-row gap-6 w-full justify-center">
+              {/* Sidebar: Slide thumbnails with mini previews */}
+              <div className="w-40 flex-shrink-0">
+                <div className="flex flex-col gap-2">
+                  {outline.map((section, idx) => (
+                    <button
+                      key={idx}
+                      className={`rounded-lg border-2 px-2 py-2 flex flex-col items-center justify-center transition-all duration-150 text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gamma-blue focus:border-gamma-blue ${selectedSlideId === idx ? 'border-gamma-blue bg-blue-50' : 'border-gray-200 bg-white hover:border-gamma-blue'}`}
+                      onClick={() => setSelectedSlideId(idx)}
+                    >
+                      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gamma-blue text-white font-bold mb-1">{idx + 1}</div>
+                      {/* Mini image preview */}
+                      {generatedImages[idx.toString()] ? (
+                        <img
+                          src={generatedImages[idx.toString()]}
+                          alt={section.title}
+                          className="w-16 h-10 object-cover rounded mb-1 border border-gray-200"
+                          style={{ background: '#f3f4f6' }}
+                        />
+                      ) : (
+                        <div className="w-16 h-10 bg-gray-200 rounded mb-1 flex items-center justify-center text-gray-400 text-xs">No Img</div>
+                      )}
+                      {/* Truncated title */}
+                      <div className="truncate w-full text-center" title={section.title}>{section.title}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Main Slide Preview */}
+              <div className="flex-1 flex flex-col items-center">
+                {/* Gamma-style slide preview container */}
+                  <div
+                  className="w-full max-w-7xl rounded shadow-2xl overflow-hidden"
+                    style={{
+                    background: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.background || 
+                               THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.backgroundGradient || 
+                               THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.colors?.background || '#fff',
+                      fontFamily: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.fontFamily || 'inherit',
+                      aspectRatio: '16/9',
+                      width: '100%',
+                      maxWidth: '1920px',
+                    }}
+                  >
+                    {(() => {
+                    const slideIndex = parseInt(selectedSlideId?.toString() || '0');
+                    
+                    // Ensure the outline array has enough elements
+                    if (slideIndex >= outline.length) {
+                      // Add missing slides to the outline
+                      const newOutline = [...outline];
+                      const slidesAdded = [];
+                      while (newOutline.length <= slideIndex) {
+                        newOutline.push({ title: '', bullets: [''] });
+                        slidesAdded.push(newOutline.length - 1);
+                      }
+                      setOutline(newOutline);
+                      
+                      // Generate images for newly added slides if image source is not 'None'
+                      if (imageSource !== 'None' && slidesAdded.length > 0) {
+                        // Trigger image generation for new slides
+                        setTimeout(() => {
+                          generateImagesForSlides();
+                        }, 100);
+                      }
+                    }
+                    
+                    const layout = outline[slideIndex]?.layout || 'image-left';
+                    const img = generatedImages[slideIndex.toString()];
+                    const title = outline[slideIndex]?.title || '';
+                    const bullets = outline[slideIndex]?.bullets || [];
+                    
+                    // Calculate optimal aspect ratio based on content
+                    const optimalAspectRatio = getOptimalAspectRatio(title, bullets);
+                    
+                    // Debug image display
+                    console.log('Slide', slideIndex, 'image:', img);
+                    console.log('All generatedImages:', generatedImages);
+                    console.log('Content length:', title?.length + (bullets?.reduce((sum, bullet) => sum + (bullet?.length || 0), 0) || 0));
+                    console.log('Optimal aspect ratio:', optimalAspectRatio);
+                      // Layouts
+                      if (layout === 'image-left') {
+                        return (
+                        <div className="flex h-full">
+                          <div className="w-2/5 h-full flex items-center justify-center relative">
+                              {img ? (
+                                <>
+                                  <img src={img} alt={title} className="w-full h-full object-cover" />
+                                  <button
+                                    className="absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+                                    title="Regenerate image"
+                                    onClick={() => handleRegenerateImageWithPrompt(slideIndex)}
+                                  >
+                                    {regeneratingImageIndex === slideIndex ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      '🖼️'
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg">Image Not Found</div>
+                              )}
+                            </div>
+                          <div className="w-3/5 h-full p-6 flex flex-col justify-center">
+                            <h2 className={`text-2xl font-bold mb-4 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                              <SlideTiptapEditor
+                                content={title}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline]; 
+                                  newOutline[slideIndex].title = newContent; 
+                                  // Store HTML content for export
+                                  if (htmlContent) {
+                                    newOutline[slideIndex].titleHtml = htmlContent;
+                                  }
+                                  setOutline(newOutline);
+                                }}
+                                placeholder="Slide title"
+                                isTitle={true}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            </h2>
+                            <div className="mt-4 flex flex-col gap-3 overflow-y-auto flex-1">
+                                {bullets.map((bullet, bulletIdx) => (
+                                <SlideTiptapEditor
+                                  key={bulletIdx}
+                                  content={bullet || ''}
+                                  onChange={(newContent, htmlContent) => {
+                                    const newOutline = [...outline];
+                                    if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                      newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                      // Store HTML content for export
+                                      if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      } else if (htmlContent) {
+                                        newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      }
+                                      setOutline(newOutline);
+                                    }
+                                  }}
+                                  placeholder={`Bullet ${bulletIdx + 1}`}
+                                  isTitle={false}
+                                  isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                  className="w-full"
+                                />
+                              ))}
+                              <button className="mt-2 text-gamma-blue hover:text-blue-700 text-sm font-medium self-start" onClick={() => { 
+                                const newOutline = [...outline];
+                                if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                  // Add a clean empty bullet
+                                  newOutline[slideIndex].bullets.push('');
+                                  // Also initialize the HTML array if it doesn't exist
+                                  if (!newOutline[slideIndex].bulletsHtml) {
+                                    newOutline[slideIndex].bulletsHtml = [];
+                                  }
+                                  newOutline[slideIndex].bulletsHtml.push('');
+                                  setOutline(newOutline);
+                                }
+                              }}>+ Add bullet point</button>
+                              </div>
+                            </div>
+                        </div>
+                        );
+                                            } else if (layout === 'image-right') {
+                        return (
+                        <div className="flex h-full">
+                          <div className="w-3/5 h-full p-8 flex flex-col justify-start">
+                            <h2 className={`text-2xl font-bold mb-4 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                              <SlideTiptapEditor
+                                content={title}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline]; 
+                                  newOutline[slideIndex].title = newContent; 
+                                  // Store HTML content for export
+                                  if (htmlContent) {
+                                    newOutline[slideIndex].titleHtml = htmlContent;
+                                  }
+                                  setOutline(newOutline);
+                                }}
+                                placeholder="Slide title"
+                                isTitle={true}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            </h2>
+                            <div className="mt-6 flex flex-col gap-4">
+                                {bullets.map((bullet, bulletIdx) => (
+                                <SlideTiptapEditor
+                                  key={bulletIdx}
+                                  content={bullet || ''}
+                                  onChange={(newContent, htmlContent) => {
+                                    const newOutline = [...outline];
+                                    if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                      newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                      // Store HTML content for export
+                                      if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      } else if (htmlContent) {
+                                        newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      }
+                                      setOutline(newOutline);
+                                    }
+                                  }}
+                                  placeholder={`Bullet ${bulletIdx + 1}`}
+                                  isTitle={false}
+                                  isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                  className="w-full"
+                                />
+                              ))}
+                              <button className="mt-4 text-gamma-blue hover:text-blue-700 text-sm font-medium self-start" onClick={() => { 
+                                const newOutline = [...outline];
+                                if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                  // Add a clean empty bullet
+                                  newOutline[slideIndex].bullets.push('');
+                                  // Also initialize the HTML array if it doesn't exist
+                                  if (!newOutline[slideIndex].bulletsHtml) {
+                                    newOutline[slideIndex].bulletsHtml = [];
+                                  }
+                                  newOutline[slideIndex].bulletsHtml.push('');
+                                  setOutline(newOutline);
+                                }
+                              }}>+ Add bullet point</button>
+                            </div>
+                          </div>
+                          <div className="w-2/5 h-full flex items-center justify-center relative">
+                              {img ? (
+                                <>
+                                  <img src={img} alt={title} className="w-full h-full object-cover" />
+                                  <button
+                                    className="absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+                                    title="Regenerate image"
+                                    onClick={() => handleRegenerateImageWithPrompt(slideIndex)}
+                                  >
+                                    {regeneratingImageIndex === slideIndex ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      '🖼️'
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg">Image Not Found</div>
+                              )}
+                            </div>
+                        </div>
+                        );
+                      } else if (layout === 'image-top') {
+                        return (
+                        <div className="flex flex-col h-full">
+                          <div className="h-2/5 w-full flex items-center justify-center relative">
+                              {img ? (
+                                <>
+                                  <img src={img} alt={title} className="w-full h-full object-cover" />
+                                  <button
+                                    className="absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+                                    title="Regenerate image"
+                                    onClick={() => handleRegenerateImageWithPrompt(slideIndex)}
+                                  >
+                                    {regeneratingImageIndex === slideIndex ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      '🖼️'
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg">Image Not Found</div>
+                              )}
+                            </div>
+                          <div className="h-3/5 w-full p-6 flex flex-col justify-center">
+                            <h2 className={`text-xl font-bold mb-3 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                              <SlideTiptapEditor
+                                content={title}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline]; 
+                                  newOutline[slideIndex].title = newContent; 
+                                  // Store HTML content for export
+                                  if (htmlContent) {
+                                    newOutline[slideIndex].titleHtml = htmlContent;
+                                  }
+                                  setOutline(newOutline);
+                                }}
+                                placeholder="Slide title"
+                                isTitle={true}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            </h2>
+                            <div className="flex flex-col gap-2 overflow-y-auto flex-1">
+                                {bullets.map((bullet, bulletIdx) => (
+                                <SlideTiptapEditor
+                                  key={bulletIdx}
+                                  content={bullet || ''}
+                                  onChange={(newContent, htmlContent) => {
+                                    const newOutline = [...outline];
+                                    if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                      newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                      // Store HTML content for export
+                                      if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      } else if (htmlContent) {
+                                        newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      }
+                                      setOutline(newOutline);
+                                    }
+                                  }}
+                                  placeholder={`Bullet ${bulletIdx + 1}`}
+                                  isTitle={false}
+                                  isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                  className="w-full"
+                                />
+                              ))}
+                              <button className="mt-2 text-gamma-blue hover:text-blue-700 text-xs font-medium self-start" onClick={() => { 
+                                const newOutline = [...outline];
+                                if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                  // Add a clean empty bullet
+                                  newOutline[slideIndex].bullets.push('');
+                                  // Also initialize the HTML array if it doesn't exist
+                                  if (!newOutline[slideIndex].bulletsHtml) {
+                                    newOutline[slideIndex].bulletsHtml = [];
+                                  }
+                                  newOutline[slideIndex].bulletsHtml.push('');
+                                  setOutline(newOutline);
+                                }
+                              }}>+ Add bullet point</button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (layout === 'image-bottom') {
+                        return (
+                        <div className="flex flex-col h-full">
+                          <div className="h-3/5 w-full p-6 flex flex-col justify-center">
+                            <h2 className={`text-xl font-bold mb-3 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                              <SlideTiptapEditor
+                                content={title}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline]; 
+                                  newOutline[slideIndex].title = newContent; 
+                                  // Store HTML content for export
+                                  if (htmlContent) {
+                                    newOutline[slideIndex].titleHtml = htmlContent;
+                                  }
+                                  setOutline(newOutline);
+                                }}
+                                placeholder="Slide title"
+                                isTitle={true}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            </h2>
+                            <div className="flex flex-col gap-2 overflow-y-auto flex-1">
+                                {bullets.map((bullet, bulletIdx) => (
+                                <SlideTiptapEditor
+                                  key={bulletIdx}
+                                  content={bullet || ''}
+                                  onChange={(newContent, htmlContent) => {
+                                    const newOutline = [...outline];
+                                    if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                      newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                      // Store HTML content for export
+                                      if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      } else if (htmlContent) {
+                                        newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                        newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                      }
+                                      setOutline(newOutline);
+                                    }
+                                  }}
+                                  placeholder={`Bullet ${bulletIdx + 1}`}
+                                  isTitle={false}
+                                  isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                  className="w-full"
+                                />
+                              ))}
+                              <button className="mt-2 text-gamma-blue hover:text-blue-700 text-xs font-medium self-start" onClick={() => { 
+                                const newOutline = [...outline];
+                                if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                  // Add a clean empty bullet
+                                  newOutline[slideIndex].bullets.push('');
+                                  // Also initialize the HTML array if it doesn't exist
+                                  if (!newOutline[slideIndex].bulletsHtml) {
+                                    newOutline[slideIndex].bulletsHtml = [];
+                                  }
+                                  newOutline[slideIndex].bulletsHtml.push('');
+                                  setOutline(newOutline);
+                                }
+                              }}>+ Add bullet point</button>
+                              </div>
+                            </div>
+                          <div className="h-2/5 w-full flex items-center justify-center relative">
+                              {img ? (
+                                <>
+                                  <img src={img} alt={title} className="w-full h-full object-cover" />
+                                  <button
+                                    className="absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+                                    title="Regenerate image"
+                                    onClick={() => handleRegenerateImageWithPrompt(slideIndex)}
+                                  >
+                                    {regeneratingImageIndex === slideIndex ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      '🖼️'
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg">Image Not Found</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      } else if (layout === 'text-only') {
+                        return (
+                        <div className="h-full p-8 flex flex-col justify-center">
+                          <h2 className={`text-3xl font-bold mb-6 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                            <SlideTiptapEditor
+                              content={title}
+                              onChange={(newContent, htmlContent) => {
+                                const newOutline = [...outline]; 
+                                newOutline[slideIndex].title = newContent; 
+                                // Store HTML content for export
+                                if (htmlContent) {
+                                  newOutline[slideIndex].titleHtml = htmlContent;
+                                }
+                                setOutline(newOutline);
+                              }}
+                              placeholder="Slide title"
+                              isTitle={true}
+                              isDarkTheme={isDarkTheme(selectedThemeKey)}
+                              className="w-full"
+                            />
+                          </h2>
+                          <div className="mt-4 flex flex-col gap-3 overflow-y-auto flex-1">
+                                {bullets.map((bullet, bulletIdx) => (
+                              <SlideTiptapEditor
+                                key={bulletIdx}
+                                content={bullet || ''}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline];
+                                  if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                    newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                    // Store HTML content for export
+                                    if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                      newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                    } else if (htmlContent) {
+                                      newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                      newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                    }
+                                    setOutline(newOutline);
+                                  }
+                                }}
+                                placeholder={`Bullet ${bulletIdx + 1}`}
+                                isTitle={false}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            ))}
+                            <button className="mt-2 text-gamma-blue hover:text-blue-700 text-sm font-medium self-start" onClick={() => { 
+                              const newOutline = [...outline];
+                              if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                // Add a clean empty bullet
+                                newOutline[slideIndex].bullets.push('');
+                                // Also initialize the HTML array if it doesn't exist
+                                if (!newOutline[slideIndex].bulletsHtml) {
+                                  newOutline[slideIndex].bulletsHtml = [];
+                                }
+                                newOutline[slideIndex].bulletsHtml.push('');
+                                setOutline(newOutline);
+                              }
+                            }}>+ Add bullet point</button>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                      // Default fallback
+                        return (
+                        <div className="h-full p-8 flex flex-col justify-center">
+                          <h2 className={`text-3xl font-bold mb-6 break-words ${THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.titleClass}`} style={{ color: THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.style?.borderColor || '#000' }}>
+                            <SlideTiptapEditor
+                              content={title}
+                              onChange={(newContent, htmlContent) => {
+                                const newOutline = [...outline]; 
+                                newOutline[slideIndex].title = newContent; 
+                                // Store HTML content for export
+                                if (htmlContent) {
+                                  newOutline[slideIndex].titleHtml = htmlContent;
+                                }
+                                setOutline(newOutline);
+                              }}
+                              placeholder="Slide title"
+                              isTitle={true}
+                              isDarkTheme={isDarkTheme(selectedThemeKey)}
+                              className="w-full"
+                            />
+                          </h2>
+                          <div className="mt-4 flex flex-col gap-2 overflow-y-auto">
+                                {bullets.map((bullet, bulletIdx) => (
+                              <SlideTiptapEditor
+                                key={bulletIdx}
+                                content={bullet || ''}
+                                onChange={(newContent, htmlContent) => {
+                                  const newOutline = [...outline];
+                                  if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                    newOutline[slideIndex].bullets[bulletIdx] = newContent;
+                                    // Store HTML content for export
+                                    if (htmlContent && newOutline[slideIndex].bulletsHtml) {
+                                      newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                    } else if (htmlContent) {
+                                      newOutline[slideIndex].bulletsHtml = newOutline[slideIndex].bulletsHtml || [];
+                                      newOutline[slideIndex].bulletsHtml[bulletIdx] = htmlContent;
+                                    }
+                                    setOutline(newOutline);
+                                  }
+                                }}
+                                placeholder={`Bullet ${bulletIdx + 1}`}
+                                isTitle={false}
+                                isDarkTheme={isDarkTheme(selectedThemeKey)}
+                                className="w-full"
+                              />
+                            ))}
+                            <button className="mt-2 text-gamma-blue hover:text-blue-700 text-sm font-medium self-start" onClick={() => { 
+                              const newOutline = [...outline];
+                              if (newOutline[slideIndex] && newOutline[slideIndex].bullets) {
+                                // Add a clean empty bullet
+                                newOutline[slideIndex].bullets.push('');
+                                // Also initialize the HTML array if it doesn't exist
+                                if (!newOutline[slideIndex].bulletsHtml) {
+                                  newOutline[slideIndex].bulletsHtml = [];
+                                }
+                                newOutline[slideIndex].bulletsHtml.push('');
+                                setOutline(newOutline);
+                              }
+                            }}>+ Add bullet point</button>
+                              </div>
+                            </div>
+                        );
+                      }
+                    })()}
+                </div>
+                {/* Navigation controls */}
+                <div className="flex items-center justify-center gap-4 mt-8">
+                  <button className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onClick={() => setSelectedSlideId(Math.max(0, (selectedSlideId ?? 0) - 1))} disabled={(selectedSlideId ?? 0) === 0}>Previous</button>
+                  
+                  {/* Enhanced Layout options for the current slide */}
+                  <div className="flex gap-2">
+                    {[
+                      { 
+                        value: 'image-left', 
+                        label: 'Image Left', 
+                        icon: (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="2" y="4" width="8" height="16" rx="2" fill="currentColor" opacity="0.2"/>
+                            <rect x="12" y="4" width="10" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="14" y1="8" x2="20" y2="8" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="14" y1="12" x2="18" y2="12" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="14" y1="16" x2="19" y2="16" stroke="currentColor" strokeWidth="1.5"/>
+                          </svg>
+                        )
+                      },
+                      { 
+                        value: 'image-right', 
+                        label: 'Image Right', 
+                        icon: (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="14" y="4" width="8" height="16" rx="2" fill="currentColor" opacity="0.2"/>
+                            <rect x="2" y="4" width="10" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="8" x2="10" y2="8" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="12" x2="8" y2="12" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="16" x2="9" y2="16" stroke="currentColor" strokeWidth="1.5"/>
+                          </svg>
+                        )
+                      },
+                      { 
+                        value: 'image-top', 
+                        label: 'Image Top', 
+                        icon: (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="2" y="4" width="20" height="8" rx="2" fill="currentColor" opacity="0.2"/>
+                            <rect x="2" y="14" width="20" height="6" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="16" x2="20" y2="16" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="19" x2="16" y2="19" stroke="currentColor" strokeWidth="1.5"/>
+                          </svg>
+                        )
+                      },
+                      { 
+                        value: 'image-bottom', 
+                        label: 'Image Bottom', 
+                        icon: (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="2" y="12" width="20" height="8" rx="2" fill="currentColor" opacity="0.2"/>
+                            <rect x="2" y="4" width="20" height="6" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="6" x2="20" y2="6" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="9" x2="16" y2="9" stroke="currentColor" strokeWidth="1.5"/>
+                          </svg>
+                        )
+                      },
+                      { 
+                        value: 'text-only', 
+                        label: 'Text Only', 
+                        icon: (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.1"/>
+                            <line x1="4" y1="8" x2="20" y2="8" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="4" y1="16" x2="14" y2="16" stroke="currentColor" strokeWidth="1.5"/>
+                          </svg>
+                        )
+                      },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        className={`px-4 py-2.5 rounded-xl border-2 text-sm font-medium flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md ${
+                          ((outline[parseInt(selectedSlideId?.toString() || '0')]?.layout || 'image-left') === opt.value) 
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-lg scale-105' 
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:scale-102'
+                        }`}
+                        onClick={() => {
+                          const newOutline = [...outline];
+                          const slideIndex = parseInt(selectedSlideId?.toString() || '0');
+                          if (newOutline[slideIndex]) {
+                            newOutline[slideIndex].layout = opt.value;
+                            setOutline(newOutline);
+                          }
+                        }}
+                        title={opt.label}
+                      >
+                        {opt.icon}
+                        <span className="font-semibold">{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <span className="text-gray-500">Slide {((selectedSlideId ?? 0) + 1)} of {outline.length}</span>
+                  <button className="px-4 py-2 rounded-lg bg-gamma-blue text-white font-semibold hover:bg-blue-700 transition" onClick={() => setSelectedSlideId(Math.min(outline.length - 1, (selectedSlideId ?? 0) + 1))} disabled={(selectedSlideId ?? 0) === outline.length - 1}>Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {currentStep === 4 && (
+          <div className="py-12 flex flex-col items-center w-full">
+            <h1 className="text-3xl font-bold mb-8">Finish</h1>
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center">
+              <h2 className="text-xl font-semibold mb-4">Summary</h2>
+              {/* Summary of user choices (dynamic) */}
+              <div className="w-full mb-6">
+                <div className="mb-2"><span className="font-semibold">Title:</span> {finalTitle}</div>
+                <div className="mb-2"><span className="font-semibold">Outline:</span>
+                  <ol className="list-decimal ml-6">
+                    {outline.map((section, idx) => (
+                      <li key={idx}>{section.title}</li>
+                    ))}
+                  </ol>
+                </div>
+                <div className="mb-2"><span className="font-semibold">Theme:</span> {THEME_PREVIEWS.find(t => t.key === selectedThemeKey)?.label}</div>
+                <div className="mb-2"><span className="font-semibold">Number of slides:</span> {slideCount}</div>
+                <div className="mb-2"><span className="font-semibold">Amount of text:</span> {amountOfText}</div>
+                <div className="mb-2"><span className="font-semibold">Image source:</span> {imageSource}</div>
+                <div className="mb-2"><span className="font-semibold">Image style:</span> {imageStyle || '(none)'}</div>
+              </div>
+              <button
+                className="w-full mt-4 px-6 py-4 bg-gamma-blue text-white rounded-full font-bold text-lg shadow-lg hover:bg-blue-700 transition text-center flex items-center justify-center gap-2"
+                onClick={handleFinalGenerate}
+                disabled={generationStatus === 'loading'}
+              >
+                <span className="text-xl">✨</span> {generationStatus === 'loading' ? 'Generating...' : 'Generate'}
+              </button>
+              {generationStatus === 'success' && <div className="mt-4 text-green-600 font-semibold">Slides generated successfully!</div>}
+              {generationStatus === 'error' && <div className="mt-4 text-red-600 font-semibold">Failed to generate slides.</div>}
+              <button className="mt-8 text-gamma-blue underline" onClick={() => setCurrentStep(0)}>Start Over</button>
+            </div>
+          </div>
+        )}
+        </div>
+
+      {/* Export Modal */}
+      {exportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30" onClick={() => setExportModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative" onClick={e => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl" onClick={() => setExportModalOpen(false)}>&times;</button>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span role="img" aria-label="Export">📤</span> Export Presentation
+            </h2>
+            {/* Tabs (UI only) */}
+            <div className="flex gap-6 mb-6 border-b pb-2">
+              <span className="font-semibold text-gamma-blue border-b-2 border-gamma-blue pb-1">Export</span>
+              <span className="text-gray-400">Collaborate</span>
+              <span className="text-gray-400">Share</span>
+              <span className="text-gray-400">Embed</span>
+            </div>
+            {/* Export options */}
+            <div className="space-y-4">
+              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-blue-50 transition" onClick={() => { DownloadService.download('pdf', presentationTitle); setExportModalOpen(false); }}>
+                <span className="bg-red-100 text-red-600 rounded-full p-2"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" /></svg></span>
+                <span className="flex-1 text-left">Export to PDF</span>
+              </button>
+              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-blue-50 transition" onClick={async () => {
+  const slidesToExport = outline.map((section, idx) => ({
+    id: `slide-${idx+1}`,
+    title: section.title,
+    titleHtml: section.titleHtml, // Include HTML content for titles
+    bullets: section.bullets,
+    bulletsHtml: section.bulletsHtml, // Include HTML content for bullets
+    image: generatedImages[idx.toString()] ? { url: generatedImages[idx.toString()], alt: section.title, source: 'ideogram' } : undefined,
+    layout: section.layout || 'image-left',
+    elements: section.elements || []
+  }));
+  const exportTheme = defaultThemes.find(t => t.id === selectedThemeKey);
+  await exportEditablePPTX(slidesToExport, presentationTitle, exportTheme);
+  setExportModalOpen(false);
+}}>
+                <span className="bg-orange-100 text-orange-600 rounded-full p-2"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4zm7 5a1 1 0 10-2 0v1H8a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V9z" /></svg></span>
+                <span className="flex-1 text-left">Export to PowerPoint</span>
+              </button>
+              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-blue-50 transition" onClick={() => { alert('To use Google Slides, export as PPTX and import to Google Slides.'); setExportModalOpen(false); }}>
+                <span className="bg-yellow-100 text-yellow-700 rounded-full p-2"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><rect width="16" height="12" x="2" y="4" rx="2" fill="#F4B400" /><rect width="12" height="8" x="4" y="6" rx="1" fill="#fff" /></svg></span>
+                <span className="flex-1 text-left">Export to Google Slides <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">NEW</span></span>
+              </button>
+              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-blue-50 transition" onClick={handleExportPNGs}>
+                <span className="bg-purple-100 text-purple-700 rounded-full p-2"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><rect width="16" height="12" x="2" y="4" rx="2" fill="#A78BFA" /><rect width="12" height="8" x="4" y="6" rx="1" fill="#fff" /></svg></span>
+                <span className="flex-1 text-left">Export as PNGs</span>
+              </button>
+            </div>
+            {/* Google Slides tip */}
+            <div className="mt-6 bg-blue-50 text-blue-900 text-sm rounded-lg p-4">
+              <b>Tip:</b> To use Google Slides, export as PowerPoint and import the PPTX file into Google Slides.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Regeneration Modal */}
+      {imageRegenerateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30" onClick={() => {
+          setImageRegenerateModalOpen(false);
+          setRegeneratingImageIndex(null);
+          setCustomImagePrompt('');
+        }}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative" onClick={e => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl" onClick={() => {
+              setImageRegenerateModalOpen(false);
+              setRegeneratingImageIndex(null);
+              setCustomImagePrompt('');
+            }}>&times;</button>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span role="img" aria-label="Image">🖼️</span> Regenerate Image
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Customize the prompt for slide {regeneratingImageIndex !== null ? regeneratingImageIndex + 1 : ''} image generation.
+            </p>
+            {regeneratingImageIndex !== null && generatedImages[regeneratingImageIndex.toString()] && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">Current image:</p>
+                <img 
+                  src={generatedImages[regeneratingImageIndex.toString()]} 
+                  alt="Current slide image" 
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+              </div>
+            )}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Image Prompt
+                </label>
+                <textarea
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gamma-blue focus:border-transparent resize-none"
+                  rows={4}
+                  value={customImagePrompt}
+                  onChange={(e) => setCustomImagePrompt(e.target.value)}
+                  placeholder="Describe the image you want to generate..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                  onClick={() => {
+                    console.log('Canceling image generation...');
+                    setImageRegenerateModalOpen(false);
+                    setRegeneratingImageIndex(null);
+                    setCustomImagePrompt('');
+                    console.log('Modal state reset');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 px-4 py-2 bg-gamma-blue text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                  onClick={handleRegenerateImage}
+                  disabled={regeneratingImageIndex !== null}
+                >
+                  {regeneratingImageIndex !== null ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <span role="img" aria-label="Generate">✨</span>
+                      Generate Image
+                    </>
+                  )}
+                </button>
+                {regeneratingImageIndex !== null && (
+                  <button
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                    onClick={() => {
+                      console.log('Force stopping image generation...');
+                      setRegeneratingImageIndex(null);
+                      setImageRegenerateModalOpen(false);
+                      setCustomImagePrompt('');
+                      alert('Generation cancelled. You can try again.');
+                    }}
+                  >
+                    Force Stop
+                  </button>
+                )}
+                <button
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                  onClick={() => {
+                    console.log('Manual test - current generatedImages:', generatedImages);
+                    console.log('Manual test - regeneratingImageIndex:', regeneratingImageIndex);
+                    // Test with a simple image
+                    const testImages = { ...generatedImages };
+                    testImages['0'] = 'http://localhost:3002/uploads/slide_0_test_1753686545602.jpg';
+                    setGeneratedImages(testImages);
+                    console.log('Manual test - set test image');
+                  }}
+                >
+                  Test Image
+                </button>
+                <button
+                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
+                  onClick={() => {
+                    console.log('Testing image display logic...');
+                    console.log('Current slide index:', selectedSlideId);
+                    console.log('Current generatedImages:', generatedImages);
+                    console.log('Image for current slide:', generatedImages[selectedSlideId?.toString() || '0']);
+                    
+                    // Test with a working image URL from the API response
+                    const testImages = { ...generatedImages };
+                    testImages[selectedSlideId?.toString() || '0'] = 'http://localhost:3002/uploads/slide_0_test_image_1753687219625.jpg';
+                    setGeneratedImages(testImages);
+                    console.log('Set test image for slide:', selectedSlideId);
+                  }}
+                >
+                  Test Display
+                </button>
+                <button
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                  onClick={async () => {
+                    console.log('Testing API with simple prompt...');
+                    try {
+                      const response = await fetch('http://localhost:3002/api/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                          prompt: 'simple test image', 
+                          style: '',
+                          slideIndex: 0 
+                        })
+                      });
+                      const data = await response.json();
+                      console.log('API test response:', data);
+                      alert('API test successful! Check console for details.');
+                    } catch (error) {
+                      console.error('API test failed:', error);
+                      alert('API test failed: ' + error.message);
+                    }
+                  }}
+                >
+                  Test API
+                </button>
+                <button
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                  onClick={async () => {
+                    console.log('Testing API with your prompt...');
+                    try {
+                      const response = await fetch('http://localhost:3002/api/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                          prompt: 'Vegeta in doddle', 
+                          style: '',
+                          slideIndex: 0 
+                        })
+                      });
+                      const data = await response.json();
+                      console.log('Your prompt API test response:', data);
+                      
+                      // Also update the image immediately
+                      if (data.imageUrl) {
+                        const newImages = { ...generatedImages };
+                        const imageUrl = data.imageUrl.startsWith('/uploads/')
+                          ? BACKEND_URL + data.imageUrl
+                          : data.imageUrl;
+                        newImages['0'] = imageUrl;
+                        setGeneratedImages(newImages);
+                        console.log('✅ Updated image with your prompt!');
+                        alert('Your prompt test successful! Image updated.');
+                      }
+                    } catch (error) {
+                      console.error('Your prompt API test failed:', error);
+                      alert('Your prompt test failed: ' + error.message);
+                    }
+                  }}
+                >
+                  Test Your Prompt
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default App; 

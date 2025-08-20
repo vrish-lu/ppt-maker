@@ -2,13 +2,25 @@
 export type SlideCard = {
   id: string;
   title: string;
+  titleHtml?: string; // HTML content for rich text titles
   bullets: string[];
+  bulletsHtml?: string[]; // HTML content for rich text bullets
   image?: {
     url: string;
     alt: string;
     source: 'ideogram' | 'unsplash' | 'icon';
     prompt?: string;
   };
+  elements?: Array<{
+    id: string;
+    svg: string; // SVG path or import
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }>;
+  layout?: 'image-left' | 'image-right' | 'image-bottom' | 'image-top' | 'full-image' | 'text-only' | 'title-only' | 'split' | '2-columns' | '3-columns' | '4-columns' | 'paragraph';
+  background?: string; // e.g., 'light', 'dark', or custom color
 };
 
 // Theme template structure
@@ -48,6 +60,8 @@ export type ThemeTemplate = {
   };
   preview: string; // CSS class or style preview
   backgroundImage?: string; // Optional background image URL
+  backgroundGradient?: string; // Optional background gradient CSS class
+  alignment?: string; // Optional text alignment (text-left, text-center, text-right)
 };
 
 // Presentation structure for download
@@ -91,6 +105,15 @@ export type SlideListProps = {
   theme?: ThemeTemplate;
   onDownload?: (format: 'pdf' | 'pptx' | 'html') => void;
   isDownloading?: boolean;
+  selectedSlideId?: string | null;
+  onSelectSlide?: (slideId: string) => void;
+};
+
+// Outline item structure
+export type OutlineItem = {
+  title: string;
+  bullets: string[];
+  layout?: 'image-left' | 'image-right' | 'image-bottom' | 'image-top' | 'full-image' | 'text-only' | 'title-only' | 'split' | '2-columns' | '3-columns' | '4-columns' | 'paragraph';
 };
 
 export type ThemeSelectorProps = {

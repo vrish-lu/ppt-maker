@@ -5,12 +5,14 @@ import { DownloadService } from '../../services/download';
 interface DownloadButtonProps {
   slides: SlideCard[];
   title: string;
+  theme: any;
   disabled?: boolean;
 }
 
 const DownloadButton: React.FC<DownloadButtonProps> = ({
   slides,
   title,
+  theme,
   disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,6 +52,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({
     }
   ];
 
+  // Accept theme as a prop (add to props if not present)
   const handleDownload = async (format: 'pdf' | 'pptx' | 'html') => {
     if (slides.length === 0) {
       alert('No slides to download. Please generate some slides first.');
@@ -58,15 +61,15 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({
 
     setIsDownloading(true);
     setIsOpen(false);
-    
     try {
       setDownloadProgress(`Generating ${format.toUpperCase()}...`);
-      
-              await DownloadService.download(format, title);
-      
+      if (format === 'pptx') {
+        await DownloadService.download(format, title, slides, theme);
+      } else {
+        await DownloadService.download(format, title);
+      }
       setDownloadProgress('Download complete!');
       setTimeout(() => setDownloadProgress(''), 2000);
-      
     } catch (error) {
       console.error('Download failed:', error);
       alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);

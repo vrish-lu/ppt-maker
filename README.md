@@ -91,10 +91,18 @@ cd NewGamma
 ### Backend API Setup
 The application now uses a secure backend API to handle OpenAI calls. This protects your API key and provides better control over usage.
 
-### OpenAI API Setup
+### API Setup
+
+#### OpenAI API (for content generation)
 1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
 2. Create an account or sign in
 3. Generate a new API key
+4. Add the key to your `server/.env.local` file
+
+#### Brave Search API (for images)
+1. Visit [Brave Search API](https://api.search.brave.com/app)
+2. Sign up for a free account
+3. Create a new API key
 4. Add the key to your `server/.env.local` file
 
 ### Environment Variables

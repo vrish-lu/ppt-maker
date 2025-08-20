@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   padding?: 'none' | 'sm' | 'md' | 'lg';
@@ -15,7 +15,8 @@ const Card = ({
   padding = 'md',
   shadow = 'md',
   hover = false,
-  style
+  style,
+  ...rest
 }: CardProps) => {
   const paddingStyles = {
     none: '',
@@ -44,6 +45,7 @@ const Card = ({
         ${className}
       `}
       style={style}
+      {...rest}
     >
       {children}
     </div>

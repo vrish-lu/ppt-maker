@@ -7,6 +7,12 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #f5f7fa; /* gamma-bg */
+}
+
+::selection {
+  background: #3a3aff; /* gamma-blue */
+  color: #fff;
 }
 
 /* Custom scrollbar styles */
@@ -15,16 +21,34 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f5f7fa; /* gamma-bg */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #64748b; /* gamma-gray */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #3a3aff; /* gamma-blue */
+}
+
+/* Textarea specific scrollbar styles */
+textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.3); /* gamma-gray with opacity */
+  border-radius: 3px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(58, 58, 255, 0.5); /* gamma-blue with opacity */
 }
 
 /* Smooth transitions */
@@ -34,7 +58,7 @@ body {
 
 /* Focus styles */
 .focus-ring:focus {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #3a3aff; /* gamma-blue */
   outline-offset: 2px;
 }
 
@@ -47,4 +71,939 @@ body {
   backface-visibility: hidden;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+}
+
+/* Breathing purple gradient background */
+.breathing-gradient-bg {
+  background: linear-gradient(135deg, #7c3aed, #a78bfa, #c4b5fd, #7c3aed);
+  background-size: 200% 200%;
+  animation: breathing-gradient 10s ease-in-out infinite;
+}
+
+@keyframes breathing-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Rich Text Editor Styles */
+.ProseMirror {
+  outline: none;
+  min-height: 1.5em;
+  padding: 0;
+  background: transparent;
+  border: none;
+  margin: 0;
+  cursor: text;
+}
+
+.ProseMirror:hover {
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 4px;
+}
+
+.ProseMirror:focus {
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+}
+.ProseMirror {
+  outline: none;
+  min-height: 1.5em;
+  padding: 0;
+  background: transparent;
+  border: none;
+  margin: 0;
+}
+
+/* Block-based editor styles */
+[contenteditable="true"] {
+  outline: none;
+  min-height: 1.5em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+[contenteditable="true"]:focus {
+  outline: none;
+}
+
+/* Floating toolbar animations */
+.floating-toolbar-enter {
+  opacity: 0;
+  transform: translateY(-10px) translateX(-50%);
+}
+
+.floating-toolbar-enter-active {
+  opacity: 1;
+  transform: translateY(0) translateX(-50%);
+  transition: opacity 200ms, transform 200ms;
+}
+
+.floating-toolbar-exit {
+  opacity: 1;
+  transform: translateY(0) translateX(-50%);
+}
+
+.floating-toolbar-exit-active {
+  opacity: 0;
+  transform: translateY(-10px) translateX(-50%);
+  transition: opacity 200ms, transform 200ms;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  font-style: italic;
+}
+
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 1.5rem 0 1rem 0;
+  line-height: 1.2;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.75rem 0;
+  line-height: 1.3;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 1rem 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.ProseMirror p {
+  margin: 0.75rem 0;
+  line-height: 1.6;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid #e5e7eb;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #6b7280;
+}
+
+/* Floating toolbar animations */
+.floating-toolbar-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.floating-toolbar-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms, transform 200ms;
+}
+
+.floating-toolbar-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.floating-toolbar-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 200ms, transform 200ms;
+}
+
+/* Block editor styles */
+.rich-text-block {
+  position: relative;
+  margin: 0.5rem 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.rich-text-block:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-radius: 0.375rem;
+}
+
+.rich-text-block.selected {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 0.375rem;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Content editable focus styles */
+[contenteditable]:focus {
+  outline: none;
+}
+
+[contenteditable]:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
 } 
+
+/* Enhanced ProseMirror styles for Tiptap */
+.ProseMirror {
+  outline: none;
+  min-height: 1.5em;
+  padding: 0;
+  background: transparent;
+  border: none;
+  margin: 0;
+  cursor: text;
+  transition: all 0.2s ease;
+}
+
+.ProseMirror:focus {
+  outline: none;
+  background-color: rgba(59, 130, 246, 0.05);
+  border-radius: 4px;
+}
+
+.ProseMirror:hover {
+  background-color: rgba(243, 244, 246, 0.2);
+  border-radius: 4px;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Enhanced floating toolbar animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) translateX(-50%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+  }
+}
+
+.floating-toolbar {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Block editor styles */
+.block-editor {
+  position: relative;
+}
+
+.block-editor .block {
+  position: relative;
+  margin: 0.5rem 0;
+}
+
+.block-editor .block:hover {
+  background-color: rgba(243, 244, 246, 0.3);
+  border-radius: 4px;
+}
+
+/* ContentEditable styles for the new rich text editor */
+[contenteditable="true"] {
+  outline: none;
+  min-height: 1.5em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  cursor: text;
+  transition: all 0.2s ease;
+}
+
+[contenteditable="true"]:focus {
+  outline: none;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+}
+
+/* Hover effect for editable areas */
+[contenteditable="true"]:hover {
+  background-color: rgba(243, 244, 246, 0.3);
+  border-radius: 4px;
+}
+
+/* Ensure proper text color inheritance */
+[contenteditable="true"] * {
+  color: inherit;
+}
+
+/* Rich text formatting styles */
+[contenteditable="true"] strong,
+[contenteditable="true"] b {
+  font-weight: bold;
+}
+
+[contenteditable="true"] em,
+[contenteditable="true"] i {
+  font-style: italic;
+}
+
+[contenteditable="true"] u {
+  text-decoration: underline;
+}
+
+[contenteditable="true"] h1 {
+  font-size: 1.875rem;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+[contenteditable="true"] h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+[contenteditable="true"] h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* List styles */
+[contenteditable="true"] ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+[contenteditable="true"] ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+}
+
+[contenteditable="true"] li {
+  margin: 0.25rem 0;
+}
+
+/* Alignment styles */
+[contenteditable="true"] [style*="text-align: center"] {
+  text-align: center;
+}
+
+[contenteditable="true"] [style*="text-align: right"] {
+  text-align: right;
+}
+
+[contenteditable="true"] [style*="text-align: left"] {
+  text-align: left;
+}
+
+/* Placeholder styles */
+[contenteditable="true"]:empty:before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Ensure the editor container doesn't interfere with slide layout */
+.rich-text-editor-container {
+  position: relative;
+  width: 100%;
+  display: inline-block;
+}
+
+/* Enhanced Toolbar positioning and styling */
+.rich-text-toolbar {
+  position: fixed;
+  z-index: 9999;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  animation: slideIn 0.2s ease-out;
+  backdrop-filter: blur(8px);
+}
+
+/* Tiptap specific styles */
+/* (Removed all .tiptap-editor, .tiptap-toolbar-button, .tiptap-content, and related selectors) */
+
+/* Ensure proper text rendering in slides */
+.slide-content .ProseMirror {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.slide-content .ProseMirror * {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+/* Active state indicators for toolbar buttons */
+.toolbar-button-active {
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #93c5fd;
+}
+
+/* Smooth transitions for all interactive elements */
+.tiptap-editor *,
+.tiptap-toolbar-button,
+.ProseMirror {
+  transition: all 0.15s ease;
+} 
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Text wrapping for slide content */
+.slide-text-wrap {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  hyphens: auto;
+  min-height: auto;
+  height: auto;
+  max-height: none;
+  overflow: hidden;
+  resize: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  box-sizing: border-box;
+  line-height: 1.2;
+  padding: 0.5rem 1rem;
+  width: 100%;
+  display: block;
+  text-overflow: ellipsis;
+}
+
+.slide-text-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+/* Slide text container boundaries */
+.slide-text-container {
+  max-width: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+}
+
+/* Container-based text constraints for 16:9 ratio */
+.text-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 16/9;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-container textarea {
+  width: 100%;
+  max-width: 100%;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  box-sizing: border-box;
+  resize: none;
+  overflow: visible;
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Title container for 16:9 ratio */
+.title-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-container textarea {
+  width: 100%;
+  max-width: 100%;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  box-sizing: border-box;
+  resize: none;
+  overflow: visible;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: center;
+  min-height: 2.5rem;
+  height: auto;
+  max-height: none;
+  line-height: 1.2;
+}
+
+/* Bullet container for 16:9 ratio */
+.bullet-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.bullet-container textarea {
+  width: 100%;
+  max-width: 100%;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  box-sizing: border-box;
+  resize: none;
+  overflow: visible;
+  border: none;
+  outline: none;
+  background: transparent;
+  min-height: 2.5rem;
+  height: auto;
+  max-height: none;
+  line-height: 1.2;
+}
+
+/* Permanent text wrapping */
+.permanent-wrap {
+  word-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  width: 100% !important;
+  display: block !important;
+  line-height: 1.2 !important;
+}
+
+/* Force contentEditable to maintain multi-line */
+.content-editable-multiline {
+  word-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  display: block !important;
+  min-height: 2.5rem !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.content-editable-multiline br {
+  display: block !important;
+  content: "" !important;
+  margin-top: 0.5em !important;
+}
+
+/* Force text to wrap at container boundaries */
+.force-wrap {
+  word-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Ultra-aggressive text wrapping for preview */
+.force-wrap-preview {
+  word-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  white-space: normal !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  display: block !important;
+  line-height: 1.2 !important;
+  padding: 0.5rem 1rem !important;
+}
+
+/* Auto-expanding textarea */
+.auto-expand-textarea {
+  min-height: 2.5rem;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  resize: none;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  width: 100%;
+}
+
+/* Force text wrapping for all slide preview textareas and contentEditable divs */
+.slide-container textarea,
+.slide-preview textarea,
+[data-slide-index] textarea,
+.slide-container [contenteditable="true"],
+.slide-preview [contenteditable="true"],
+[data-slide-index] [contenteditable="true"],
+.outline-section [contenteditable="true"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  resize: none !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+/* Force text wrapping for outline section textareas and contentEditable divs */
+.outline-section textarea,
+.card textarea,
+[data-outline-index] textarea,
+textarea[placeholder="Enter bullet point..."],
+.outline-section [contenteditable="true"],
+.card [contenteditable="true"],
+[data-outline-index] [contenteditable="true"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  resize: none !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  display: block !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Force container expansion for outline cards */
+.card,
+.outline-section,
+[data-outline-index] {
+  width: 100% !important;
+  max-width: none !important;
+  overflow: visible !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Force flex containers to allow textarea expansion */
+.flex-1,
+.flex {
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+/* Target the specific outline card structure */
+.bg-gray-50.rounded-lg.p-4.shadow-sm {
+  overflow: visible !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Ensure textarea and contentEditable div can break out of flex constraints */
+.bg-gray-50.rounded-lg.p-4.shadow-sm textarea,
+.bg-gray-50.rounded-lg.p-4.shadow-sm [contenteditable="true"] {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  overflow: visible !important;
+  resize: none !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  display: block !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Ensure all parent containers of outline cards and textareas allow overflow */
+.bg-gray-50.rounded-lg.p-4.shadow-sm,
+.bg-gray-50.rounded-lg.p-4.shadow-sm > *,
+.bg-gray-50.rounded-lg.p-4.shadow-sm > * > *,
+.bg-gray-50.rounded-lg.p-4.shadow-sm > * > * > * {
+  overflow: visible !important;
+}
+
+/* Specific rules for text-only layout to prevent overlapping */
+.slide-container .text-only-layout,
+.slide-container .text-only-layout * {
+  overflow: visible !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  max-width: 100% !important;
+}
+
+.slide-container .text-only-layout [contenteditable="true"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  white-space: pre-wrap !important;
+  box-sizing: border-box !important;
+  text-overflow: unset !important;
+  display: block !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Fix icon sizing in text-only layout */
+.slide-container .text-only-layout .flex-shrink-0 {
+  flex-shrink: 0 !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+}
+
+/* Ensure proper spacing in text-only layout */
+.slide-container .text-only-layout .space-x-3 > * + * {
+  margin-left: 0.75rem !important;
+}
+
+/* Force text wrapping for all contentEditable elements */
+.slide-container [contenteditable="true"],
+.outline-section [contenteditable="true"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  white-space: pre-wrap !important;
+  box-sizing: border-box !important;
+  text-overflow: unset !important;
+  display: block !important;
+}
+
+/* Custom font classes for Clean White theme */
+.font-playfair {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-weight: 700 !important;
+}
+
+.font-opensans {
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-weight: 400 !important;
+}
+
+.font-libre-baskerville {
+  font-family: 'Libre Baskerville', Georgia, serif !important;
+  font-weight: 400 !important;
+}
+
+.font-redhat-text {
+  font-family: 'Red Hat Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-weight: 400 !important;
+}
+
+.font-roboto-light {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-weight: 300 !important;
+}
+
+.font-hubot-sans {
+  font-family: 'Hubot Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-weight: 700 !important;
+}
+
+.font-roboto-condensed {
+  font-family: 'Roboto Condensed', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-weight: 400 !important;
+}
+
+.font-kanit {
+  font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-weight: 300 !important;
+}
+
+.font-lato {
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-weight: 400 !important;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-weight: 900 !important;
+}
+
+.font-inconsolata {
+  font-family: 'Inconsolata', 'Courier New', monospace !important;
+  font-weight: 400 !important;
+}
+
+.font-alice {
+  font-family: 'Alice', serif !important;
+  font-weight: 400 !important;
+}
+
+.font-lora {
+  font-family: 'Lora', Georgia, 'Times New Roman', serif !important;
+  font-weight: 400 !important;
+}
+
+/* Presentation mode enhancements */
+.presentation-mode {
+  font-family: 'system-ui', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.presentation-mode * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.presentation-controls {
+  transition: opacity 0.3s ease;
+}
+
+.presentation-controls:hover {
+  opacity: 1 !important;
+}
+
+/* Presentation View Animations - Gamma Style */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-slide-in {
+  animation: slide-in 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-slide-down {
+  animation: slide-down 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
