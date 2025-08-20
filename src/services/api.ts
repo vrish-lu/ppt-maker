@@ -1,7 +1,7 @@
 import { SlideCard } from '../types';
 
 // API base URL - change this for production
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ppt-maker-ezzr.onrender.com/api';
 
 /**
  * Generate slides based on a topic using the backend API
